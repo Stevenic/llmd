@@ -1,0 +1,11 @@
+@llmd_tools__javascript
+@setup
+>No dependencies required. Requires Node.js v18+.
+@llmdc__llmd_compiler
+>Compiles Markdown files into LLMD format with configurable compression levels (c0–c2).
+::bash
+<<<
+# Basic usage (defaults to c2 compression) node llmdc.js input.md # Specify compression level and output file node llmdc.js input.md -c 2 -o output.llmd # Compile a directory of markdown files node llmdc.js docs/ -c 2 -o combined.llmd # Use concat scope mode (API > Auth becomes @API_Auth) node llmdc.js input.md -c 2 --scope-mode concat # Split sentences into separate > lines node llmdc.js input.md -c 2 --sentence-split # Keep URLs in output at c2+ node llmdc.js input.md -c 2 --keep-urls # Re-emit @scope every 30 lines for chunk safety node llmdc.js input.md -c 2 --anchor-every 30 # Use a custom config file node llmdc.js input.md --config my-config.json # Show all options node llmdc.js --help
+>>>
+>Compression levels:
+:c0=Structural normalize — clean whitespace, preserve wording c1=Compact structure — merge attributes, collapse blanks c2=Token compaction — stopwords, phrase map, unit normalization, boolean compression

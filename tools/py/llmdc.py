@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ============================================================
 # llmdc — LLMD Compiler (Python)
-# Spec: LLMD v0.1 + Compiler Design v0.1 + DCS v1.0
+# Spec: LLMD v0.1 + Compiler Design v0.1
 # ============================================================
 import argparse
 import json
@@ -582,187 +582,6 @@ def compress_c2(lines, config):
     return out
 
 
-def compress_c3(lines, dicts):
-    if not dicts:
-        return lines
-
-    # Merge dictionaries
-    merged = {"scope": {}, "key": {}, "value": {}, "text": {}, "type": {}}
-    policy = {"case": "smart", "match": "token", "longest_match": True, "max_passes": 1}
-    protect_set = {"no", "not", "never", "must", "should", "may"}
-    stop_c3 = []
-
-    for d in dicts:
-        if "policy" in d:
-            policy.update(d["policy"])
-            prot = d.get("policy", {}).get("protect", {})
-            if prot.get("negations"):
-                protect_set |= {"no", "not", "never"}
-            if prot.get("modals"):
-                protect_set |= {"must", "should", "may"}
-        if "maps" in d:
-            for ns in ("scope", "key", "value", "text", "type"):
-                if ns in d["maps"]:
-                    merged[ns].update(d["maps"][ns])
-        if "stop" in d and "c3" in d["stop"]:
-            stop_c3.extend(d["stop"]["c3"])
-
-    stop_set = set(s.lower() for s in stop_c3)
-
-    # Sort by key length desc for longest match
-    sorted_maps = {}
-    for ns in ("scope", "key", "value", "text", "type"):
-        sorted_maps[ns] = sorted(merged[ns].items(), key=lambda x: len(x[0]), reverse=True)
-
-    mode = policy.get("match", "token")
-    case_mode = policy.get("case", "smart")
-
-    def apply_map(text, entries, match_mode):
-        if not entries:
-            return text
-
-        if match_mode == "token":
-            parts = re.split(r"(\s+)", text)
-            result = []
-            for part in parts:
-                if re.match(r"^\s+$", part):
-                    result.append(part)
-                    continue
-                low = part.lower()
-                if low in protect_set:
-                    result.append(part)
-                    continue
-                if re.match(r"^\d", part):
-                    result.append(part)
-                    continue
-                replaced = False
-                for key, val in entries:
-                    key_cmp = key if case_mode == "preserve" else key.lower()
-                    part_cmp = part if case_mode == "preserve" else low
-                    if part_cmp == key_cmp:
-                        result.append(val)
-                        replaced = True
-                        break
-                if not replaced:
-                    result.append(part)
-            return "".join(result)
-        else:
-            # Word mode
-            result = text
-            for key, val in entries:
-                flags = 0 if case_mode == "preserve" else re.IGNORECASE
-                pattern = r"(?<![A-Za-z0-9_./-])" + re.escape(key) + r"(?![A-Za-z0-9_./-])"
-                result = re.sub(pattern, val, result, flags=flags)
-            return result
-
-    def is_value_eligible(val):
-        if re.match(r"^\d", val):
-            return False
-        if val.startswith("http://") or val.startswith("https://"):
-            return False
-        if val.startswith('"') and val.endswith('"'):
-            return False
-        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9._-]*", val):
-            return False
-        return True
-
-    passes = min(policy.get("max_passes", 1), 10)
-    result = list(lines)
-
-    for _ in range(passes):
-        in_block = False
-        new_result = []
-
-        for line in result:
-            if line == "<<<":
-                in_block = True
-                new_result.append(line)
-                continue
-            if line == ">>>":
-                in_block = False
-                new_result.append(line)
-                continue
-            if in_block:
-                new_result.append(line)
-                continue
-
-            # @scope
-            if line.startswith("@"):
-                scope = line[1:].strip()
-                replaced = apply_map(scope, sorted_maps["scope"], mode)
-                new_result.append("@" + replaced)
-                continue
-
-            # ::type
-            if line.startswith("::"):
-                tp = line[2:].strip()
-                replaced = apply_map(tp, sorted_maps["type"], mode)
-                new_result.append("::" + replaced)
-                continue
-
-            # :k=v pairs
-            if line.startswith(":"):
-                body = line[1:].strip()
-                pairs = body.split()
-                new_pairs = []
-                for p in pairs:
-                    eq_idx = p.find("=")
-                    if eq_idx <= 0:
-                        new_pairs.append(p)
-                        continue
-                    k = p[:eq_idx]
-                    v = p[eq_idx + 1:]
-
-                    new_k = apply_map(k, sorted_maps["key"], mode)
-
-                    v_parts = re.split(r"([|,])", v)
-                    new_v_parts = []
-                    for vp in v_parts:
-                        if vp in ("|", ","):
-                            new_v_parts.append(vp)
-                            continue
-                        trimmed = vp.strip()
-                        if not is_value_eligible(trimmed):
-                            new_v_parts.append(trimmed)
-                        else:
-                            new_v_parts.append(apply_map(trimmed, sorted_maps["value"], mode))
-                    new_pairs.append(new_k + "=" + "".join(new_v_parts))
-                new_result.append(":" + " ".join(new_pairs))
-                continue
-
-            # >text
-            if line.startswith(">"):
-                body = line[1:]
-                depth_m = re.match(r"^(\.+\s)", body)
-                depth_prefix = depth_m.group(0) if depth_m else ""
-                text_body = body[len(depth_prefix):] if depth_prefix else body
-
-                new_text = apply_map(text_body, sorted_maps["text"], mode)
-
-                if stop_set:
-                    toks = new_text.split()
-                    new_text = " ".join(
-                        t for t in toks
-                        if t.lower() in protect_set or t.lower() not in stop_set
-                    )
-
-                new_result.append(">" + depth_prefix + new_text)
-                continue
-
-            # ->relation
-            if line.startswith("->"):
-                target = line[2:].strip()
-                replaced = apply_map(target, sorted_maps["scope"], mode)
-                new_result.append("->" + replaced)
-                continue
-
-            new_result.append(line)
-
-        result = new_result
-
-    return result
-
-
 # ============================================================
 # Stage 6: Post-processing
 # ============================================================
@@ -820,7 +639,7 @@ def stage6(lines, config):
 # ============================================================
 # Main Compile Pipeline
 # ============================================================
-def compile_text(text, config, dicts):
+def compile_text(text, config):
     compression = config.get("compression", 2)
 
     # Stage 0
@@ -842,8 +661,6 @@ def compile_text(text, config, dicts):
         output = compress_c1(output)
     if compression >= 2:
         output = compress_c2(output, config)
-    if compression >= 3:
-        output = compress_c3(output, dicts)
 
     # Stage 6
     output = stage6(output, config)
@@ -861,8 +678,7 @@ def main():
     )
     parser.add_argument("inputs", nargs="+", help="Input file(s) or directory")
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")
-    parser.add_argument("-c", "--compression", type=int, choices=[0, 1, 2, 3], help="Compression level (default: from config or 2)")
-    parser.add_argument("--dict", action="append", default=[], dest="dicts", help="Dictionary file (repeatable)")
+    parser.add_argument("-c", "--compression", type=int, choices=[0, 1, 2], help="Compression level (default: from config or 2)")
     parser.add_argument("--scope-mode", choices=["flat", "concat", "stacked"], help="Scope mode (default: flat)")
     parser.add_argument("--keep-urls", action="store_true", help="Keep URLs at c2+")
     parser.add_argument("--sentence-split", action="store_true", help="Split sentences into separate > lines at c2+")
@@ -894,9 +710,6 @@ def main():
         config["anchor_every"] = args.anchor_every
     config.setdefault("compression", 2)
 
-    # Load dictionaries
-    dicts = [read_json(p) for p in args.dicts]
-
     # Collect files
     files = list_files(args.inputs)
     if not files:
@@ -910,7 +723,7 @@ def main():
         with open(fp, "r", encoding="utf-8") as f:
             all_text += f.read()
 
-    result = compile_text(all_text, config, dicts)
+    result = compile_text(all_text, config)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:

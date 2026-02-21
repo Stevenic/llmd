@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================================
 // llmdc — LLMD Compiler (JavaScript)
-// Spec: LLMD v0.1 + Compiler Design v0.1 + DCS v1.0
+// Spec: LLMD v0.1 + Compiler Design v0.1
 // ============================================================
 import fs from "fs";
 import path from "path";
@@ -583,172 +583,6 @@ function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// c3: DCS dictionary application
-function compressC3(lines, dicts) {
-  if (!dicts || dicts.length === 0) return lines;
-
-  // Merge dictionaries (later overrides earlier)
-  const merged = { scope: {}, key: {}, value: {}, text: {}, type: {} };
-  let policy = { case: "smart", match: "token", longest_match: true, max_passes: 1 };
-  let stopC3 = [];
-  let protectSet = new Set(["no", "not", "never", "must", "should", "may"]);
-
-  for (const dict of dicts) {
-    if (dict.policy) {
-      policy = { ...policy, ...dict.policy };
-      if (dict.policy.protect) {
-        if (dict.policy.protect.negations) {
-          protectSet.add("no"); protectSet.add("not"); protectSet.add("never");
-        }
-        if (dict.policy.protect.modals) {
-          protectSet.add("must"); protectSet.add("should"); protectSet.add("may");
-        }
-      }
-    }
-    if (dict.maps) {
-      for (const ns of ["scope", "key", "value", "text", "type"]) {
-        if (dict.maps[ns]) Object.assign(merged[ns], dict.maps[ns]);
-      }
-    }
-    if (dict.stop?.c3) stopC3 = [...stopC3, ...dict.stop.c3];
-  }
-
-  const stopSet = new Set(stopC3.map(s => s.toLowerCase()));
-
-  // Sort keys by length desc for longest-match
-  const sortedMaps = {};
-  for (const ns of ["scope", "key", "value", "text", "type"]) {
-    sortedMaps[ns] = Object.entries(merged[ns]).sort((a, b) => b[0].length - a[0].length);
-  }
-
-  function applyMap(text, entries, mode) {
-    if (entries.length === 0) return text;
-
-    if (mode === "token") {
-      // Token mode: split on whitespace, replace full tokens
-      const tokens = text.split(/(\s+)/);
-      return tokens.map(tok => {
-        if (/^\s+$/.test(tok)) return tok;
-        const low = tok.toLowerCase();
-        if (protectSet.has(low)) return tok;
-        if (/^\d+/.test(tok)) return tok; // protect numbers
-        for (const [key, val] of entries) {
-          const keyLow = policy.case === "preserve" ? key : key.toLowerCase();
-          const cmp = policy.case === "preserve" ? tok : low;
-          if (cmp === keyLow) return val;
-        }
-        return tok;
-      }).join("");
-    } else {
-      // Word mode: use regex with word boundaries
-      let result = text;
-      for (const [key, val] of entries) {
-        const flags = policy.case === "preserve" ? "g" : "gi";
-        const re = new RegExp("(?<![A-Za-z0-9_./\\-])" + escapeRegex(key) + "(?![A-Za-z0-9_./\\-])", flags);
-        result = result.replace(re, val);
-      }
-      return result;
-    }
-  }
-
-  function isValueEligible(val) {
-    if (/^[0-9]/.test(val)) return false;
-    if (/^https?:\/\//.test(val)) return false;
-    if (/^".*"$/.test(val)) return false;
-    if (!/^[A-Za-z][A-Za-z0-9._-]*$/.test(val)) return false;
-    return true;
-  }
-
-  const mode = policy.match || "token";
-  let inBlock = false;
-
-  const passes = Math.min(policy.max_passes || 1, 10);
-  let result = [...lines];
-
-  for (let pass = 0; pass < passes; pass++) {
-    result = result.map(line => {
-      if (line === "<<<") { inBlock = true; return line; }
-      if (line === ">>>") { inBlock = false; return line; }
-      if (inBlock) return line;
-
-      // @scope
-      if (line.startsWith("@")) {
-        const scope = line.slice(1).trim();
-        const replaced = applyMap(scope, sortedMaps.scope, mode);
-        return "@" + replaced;
-      }
-
-      // ::type
-      if (line.startsWith("::")) {
-        const tp = line.slice(2).trim();
-        const replaced = applyMap(tp, sortedMaps.type, mode);
-        return "::" + replaced;
-      }
-
-      // :k=v pairs
-      if (line.startsWith(":")) {
-        const body = line.slice(1).trim();
-        const pairs = body.split(/\s+/).filter(Boolean);
-        const newPairs = pairs.map(p => {
-          const eqIdx = p.indexOf("=");
-          if (eqIdx <= 0) return p;
-          const k = p.slice(0, eqIdx);
-          const v = p.slice(eqIdx + 1);
-
-          // Apply key map
-          const newK = applyMap(k, sortedMaps.key, mode);
-
-          // Apply value map to enum-split parts
-          const vParts = v.split(/([|,])/);
-          const newV = vParts.map(part => {
-            if (part === "|" || part === ",") return part;
-            const trimmed = part.trim();
-            if (!isValueEligible(trimmed)) return trimmed;
-            return applyMap(trimmed, sortedMaps.value, mode);
-          }).join("");
-
-          return newK + "=" + newV;
-        });
-        return ":" + newPairs.join(" ");
-      }
-
-      // >text
-      if (line.startsWith(">")) {
-        let body = line.slice(1);
-        // Depth prefix preservation
-        const depthMatch = body.match(/^(\.+\s)/);
-        const depthPrefix = depthMatch ? depthMatch[0] : "";
-        const textBody = depthPrefix ? body.slice(depthPrefix.length) : body;
-
-        let newText = applyMap(textBody, sortedMaps.text, mode);
-
-        // Remove c3 stopwords
-        if (stopSet.size > 0) {
-          const toks = newText.split(/\s+/).filter(Boolean);
-          newText = toks.filter(t => {
-            const low = t.toLowerCase();
-            if (protectSet.has(low)) return true;
-            return !stopSet.has(low);
-          }).join(" ");
-        }
-
-        return ">" + depthPrefix + newText;
-      }
-
-      // ->relation targets: apply scope map
-      if (line.startsWith("->")) {
-        const target = line.slice(2).trim();
-        const replaced = applyMap(target, sortedMaps.scope, mode);
-        return "->" + replaced;
-      }
-
-      return line;
-    });
-  }
-
-  return result;
-}
-
 // ============================================================
 // Stage 6: Post-processing
 // ============================================================
@@ -807,7 +641,7 @@ function stage6(lines, config) {
 // ============================================================
 // Main Compile Pipeline
 // ============================================================
-function compile(text, config, dicts) {
+function compile(text, config) {
   const compression = config.compression ?? 2;
 
   // Stage 0
@@ -826,7 +660,6 @@ function compile(text, config, dicts) {
   if (compression >= 0) output = compressC0(output);
   if (compression >= 1) output = compressC1(output);
   if (compression >= 2) output = compressC2(output, config);
-  if (compression >= 3) output = compressC3(output, dicts);
 
   // Stage 6
   output = stage6(output, config);
@@ -842,7 +675,6 @@ function parseArgs(argv) {
     inputs: [],
     output: null,
     compression: null,
-    dicts: [],
     scopeMode: null,
     keepUrls: null,
     sentenceSplit: null,
@@ -855,7 +687,6 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === "-o" || a === "--output") { args.output = argv[++i]; }
     else if (a === "-c" || a === "--compression") { args.compression = parseInt(argv[++i]); }
-    else if (a === "--dict") { args.dicts.push(argv[++i]); }
     else if (a === "--scope-mode") { args.scopeMode = argv[++i]; }
     else if (a === "--keep-urls") { args.keepUrls = true; }
     else if (a === "--sentence-split") { args.sentenceSplit = true; }
@@ -868,8 +699,7 @@ Usage: llmdc [options] <input...>
 
 Options:
   -o, --output <path>       Output file (default: stdout)
-  -c, --compression <0-3>   Compression level (default: from config or 2)
-  --dict <path>             Dictionary file (repeatable, later overrides earlier)
+  -c, --compression <0-2>   Compression level (default: from config or 2)
   --scope-mode <mode>       Scope mode: flat, concat, stacked (default: flat)
   --keep-urls               Keep URLs at c2+ (default: strip)
   --sentence-split          Split sentences into separate > lines at c2+
@@ -914,9 +744,6 @@ function main() {
   if (args.anchorEvery !== null) config.anchor_every = args.anchorEvery;
   if (config.compression === undefined) config.compression = 2;
 
-  // Load dictionaries
-  const dicts = args.dicts.map(p => readJSON(p));
-
   // Collect input files
   const files = listFiles(args.inputs);
   if (files.length === 0) die("no input files found");
@@ -928,7 +755,7 @@ function main() {
     allText += fs.readFileSync(fp, "utf8");
   }
 
-  const result = compile(allText, config, dicts);
+  const result = compile(allText, config);
 
   if (args.output) {
     fs.writeFileSync(args.output, result, "utf8");

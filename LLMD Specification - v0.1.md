@@ -149,7 +149,7 @@ Example:
 Compiler MAY:
 
 * Remove stopwords (c2+)
-* Apply dictionary replacements (c3)
+* Apply phrase map replacements (c2)
 
 ---
 
@@ -240,12 +240,6 @@ Compiler options:
 @API_Auth
 ```
 
-### Option C (dictionary compressed)
-
-```
-@A
-```
-
 LLMD itself does NOT encode explicit multi-level hierarchy.
 Hierarchy is compiler concern, not runtime syntax.
 
@@ -255,7 +249,7 @@ This removes `/` token repetition.
 
 # 6. Compression Levels (Normative)
 
-`c ∈ {0,1,2,3}`
+`c ∈ {0,1,2}`
 
 ---
 
@@ -301,31 +295,6 @@ Must preserve:
 
 ---
 
-## c3 — Symbolic Compression
-
-* Apply deterministic abbreviation dictionary
-* Shorten scope names
-* Replace phrases with operators:
-
-  * depends on → `->`
-  * optional → `?`
-* Remove most punctuation
-* Aggressively inline enumerations
-
-Example:
-
-```
-oauth2 → O2
-apikey → K
-authentication → auth
-database → db
-configuration → cfg
-```
-
-Dictionary MUST be static and deterministic.
-
----
-
 # 7. Normalization Rules
 
 ## 7.1 Scope Names
@@ -338,10 +307,6 @@ At minimum:
 At c2+:
 
 * Lowercase
-
-At c3:
-
-* Apply dictionary shortening
 
 ---
 
@@ -446,8 +411,7 @@ Minimal pipeline:
 4. Convert lists → `>`
 5. Convert simple pairs → `:k=v`
 6. Apply compression rules by level
-7. Apply dictionary if c3
-8. Emit file
+7. Emit file
 
 No AST required (line-based parser is sufficient).
 
@@ -457,7 +421,6 @@ No AST required (line-based parser is sufficient).
 
 * Stable scope IDs for chunk-safe slicing
 * Inline scope hash markers
-* Frequency-based auto-shortening dictionary
 * Global term alias table at file top
 
 ---

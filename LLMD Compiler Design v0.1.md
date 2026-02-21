@@ -4,7 +4,7 @@
 
 * Deterministic compilation: same input + config ⇒ same output
 * Token-first output (scoped `@`, no repeated prefixes)
-* Supports c0–c3 (structure → compaction → dictionary)
+* Supports c0–c2 (structure → compaction)
 * Fast, streaming-friendly, simple to implement in JS/Python
 * Robust enough for “real markdown” (lists, headings, tables, code fences, links)
 
@@ -20,8 +20,6 @@ Examples:
 
 * `llmdc in.md -o out.llmd -c 2`
 * `llmdc docs/ -c 2 -o out.llmd --concat`
-* `llmdc in.md -c 3 --dict dict/llmd-core.dict.json --dict dict/llmd-auto.dict.json`
-
 ## Inputs
 
 * `.md`, `.markdown` (primary)
@@ -66,7 +64,7 @@ Replace each extracted block with a placeholder line:
 
 Store block metadata: `{index, lang, content}`.
 
-> Why: prevents stopword removal/dictionary passes from touching code.
+> Why: prevents stopword removal/compression passes from touching code.
 
 ### Stage 2: Markdown Structure Pass (light parse)
 
@@ -193,7 +191,7 @@ Emit block header + raw content:
 * `::code` or `::json` (type derived from fence lang if present)
 * `<<<` + content + `>>>`
 
-### Stage 5: Compression Passes (c0–c3)
+### Stage 5: Compression Passes (c0–c2)
 
 Apply progressively, skipping block content.
 
@@ -221,23 +219,6 @@ Only affects `>` and sometimes values:
 
 **Conservative rule:** never remove `no/not/never/must/should/may` and never remove punctuation that flips meaning (like `?` for uncertainty if you use it).
 
-#### c3: dictionary + symbolization
-
-Apply DCS dictionaries:
-
-* `--dict` can be provided multiple times; merge in order (later overrides earlier).
-* apply namespace maps:
-
-  * scope map on `@...`
-  * key map on `:k=...` keys
-  * value map on enum-ish values (`|` and `,` splitting)
-  * text map on `>` tokens
-
-Optional c3 extras:
-
-* shorten common units (already in c2)
-* shorten scope names (dictionary or AUTO already does this)
-
 ### Stage 6: Post-processing
 
 * Optionally insert **anchors** for chunk safety:
@@ -259,7 +240,7 @@ The compiler MUST:
 * sort directory inputs lexicographically
 * never depend on hash iteration order (always sort)
 * use stable tie-breakers in table/key inference
-* use fixed configs for stopwords/phrase map/dictionary
+* use fixed configs for stopwords/phrase map
 
 ---
 
@@ -298,44 +279,6 @@ The compiler MUST:
 CLI flags override config.
 
 ---
-
-# Dictionary Integration
-
-## Dictionary loading
-
-* `--dict` can be repeated
-* Merge namespace maps:
-
-  * `scope`, `key`, `value`, `text`, `type`
-* If collision: later dict wins
-
-Typical usage:
-
-* curated core first
-* AUTO dict last (so it can override)
-
-```bash
-llmdc in.md -c 3 --dict dict/llmd-core.dict.json --dict dict/llmd-auto.dict.json
-```
-
----
-
-# Benchmarking (Compiler vs Benchmark Harness)
-
-Your benchmark harness currently measures:
-
-* canonicalized LLMD c1-ish before dict
-* after dict
-
-The compiler benchmark should measure:
-
-1. Markdown token estimate
-2. LLMD output token estimate
-
-For apples-to-apples you can benchmark:
-
-* Markdown raw tokens via heuristic
-* LLMD output tokens via same heuristic
 
 ---
 
@@ -381,7 +324,6 @@ Always preserved exactly (or minified only if explicitly enabled for json/yaml a
 
 * key:value extraction → `:k=v`
 * table parsing (pipe tables)
-* dictionary application (c3)
 
 ### Phase 3
 

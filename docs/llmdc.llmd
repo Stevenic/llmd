@@ -5,14 +5,13 @@
 @usage
 ::bash
 <<<
-# Basic compilation (defaults to c2) llmdc input.md # Compile to file at compression level 2 llmdc input.md -o output.llmd -c 2 # Compile a directory llmdc docs/ -c 2 -o out.llmd # With dictionary (c3) llmdc input.md -c 3 --dict dict/llmd-core.dict.json -o out.llmd # Multiple dictionaries (later overrides earlier) llmdc input.md -c 3 --dict dict/llmd-core.dict.json --dict dict/llmd-auto.dict.json
+# Basic compilation (defaults to c2) llmdc input.md # Compile to file at compression level 2 llmdc input.md -o output.llmd -c 2 # Compile a directory llmdc docs/ -c 2 -o out.llmd
 >>>
 >---
 @options
 :_cols=option|description|default
 >-o, --output <path>|Output file (stdout if omitted)|stdout
->-c, --compression <0-3>|Compression level|from config or 2
->--dict <path>|DCS dictionary file (repeatable)|none
+>-c, --compression <0-2>|Compression level|from config or 2
 >--scope-mode <mode>|flat, concat, or stacked|flat
 >--keep-urls|Preserve URLs at c2+|false
 >--sentence-split|Split sentences into separate > lines at c2+|false
@@ -24,7 +23,7 @@
 >Auto-detected from llmdc.config.json or config/llmdc.config.json. CLI flags override config values.
 >See config/llmdc.config.json for full default configuration.
 :_cols=key|type|default|description
->compression|int|2|Compression level (0-3)
+>compression|int|2|Compression level (0-2)
 >scope_mode|string|"flat"|Scope resolution mode
 >keep_urls|bool|false|Preserve URLs at c2+
 >sentence_split|bool|false|Split sentences at c2+
@@ -68,7 +67,7 @@
 @stage_5_compression_passes
 >Applied progressively, skipping block content:
 :_cols=level|name|transformations
-:c0=Normalize|Whitespace normalize, blank line collapse c1=Compact|Merge consecutive :k=v, prefix extraction c2=Token compact|Stopword removal, phrase map, unit normalization, boolean compression c3=Symbolic|Apply DCS dictionary maps across all namespaces
+:c0=Normalize|Whitespace normalize, blank line collapse c1=Compact|Merge consecutive :k=v, prefix extraction c2=Token compact|Stopword removal, phrase map, unit normalization, boolean compression
 @stage_6_post-process
 >Validation (no scoped lines before first @), optional scope anchors.
 >---

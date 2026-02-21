@@ -1,0 +1,31 @@
+@api_reference
+@authentication
+>API supports authentication via OAuth2 and API keys.
+>Use OAuth2 for user-facing applications.
+>Use API keys for server-to-server communication.
+:rate_limit=1000/m
+@authorization
+>Authorization is handled via role-based access control (RBAC).
+:_col=permission
+:admin=Full access user=Read only service=API access
+@configuration
+@database
+:connection_timeout=30s max_connections=100 retry_policy=exponential backoff
+::json
+<<<
+{"retry": 3, "backoff": "exp"}
+>>>
+@cache
+>application uses Redis for caching to improve performance.
+>Cache TTL is 300s
+>Cache invalidation is handled automatically
+>Session data is not cached because security concerns
+@error_handling
+>API returns standard HTTP error codes. All errors include JSON body with message field.
+>Errors should be logged for debugging purposes. system must handle rate limiting gracefully. Users may retry after specified cooldown period.
+@dependencies
+>API depends on following services:
+>Database (PostgreSQL)
+>Cache (Redis)
+>Authentication service (OAuth2 provider)
+>Notification service (optional)

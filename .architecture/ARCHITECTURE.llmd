@@ -1,0 +1,85 @@
+@llmd_architecture
+>LLMD (LLM-optimized Deterministic format) is deterministic compiler system converts Markdown into compact, token-efficient format optimized for LLM consumption while preserving semantic meaning.
+>Author: Steven Ickman | License: MIT
+>---
+@core_concepts
+>LLMD replaces verbose hierarchical Markdown with implicit scoping. Instead of repeating full paths, single @scope declaration sets context for all subsequent lines until next scope change.
+@line_types
+:_cols=prefix|name|purpose
+>~|Metadata|Optional file-level metadata (one per file)
+>@|Scope|Sets implicit context for following lines
+>:|Attribute|Scoped key-value pairs (:k=v)
+>>|Item|Unstructured content under current scope
+>->|Relation|Declares dependencies from current scope
+>::|Block|Preserves raw code/JSON between <<</>>>
+@compression_levels
+:_cols=level|name|description
+:c0=Structural normalize|Clean whitespace, normalize structure c1=Compact structure|Lists to >, Key: Value to :k=v, collapse space c2=Token compaction|Stopword removal, phrase normalization, unit simplify
+>---
+@system_components
+::code
+<<<
+┌─────────────────────────────────────────┐ │ LLMD System │ │ │ │ ┌──────────────────────────────────┐ │ │ │ Compiler (6 stages) │ │ │ │ Markdown → LLMD │ │ │ └──────────────┬───────────────────┘ │ │ │ │ │ ▼ │ │ ┌──────────────────────────────────┐ │ │ │ Config │ │ │ └──────────────────────────────────┘ │ └─────────────────────────────────────────┘
+>>>
+>---
+@compiler_pipeline
+>compiler transforms Markdown to LLMD through six sequential stages:
+::code
+<<<
+Markdown Input │ ▼ Stage 0: Normalize ──────── UTF-8, NFKC unicode, line endings │ ▼ Stage 1: Extract Blocks ─── Protect code blocks with placeholders │ ▼ Stage 2: Parse to IR ────── Headings, paragraphs, lists, tables, KV pairs │ ▼ Stage 3: Resolve Scopes ─── Hierarchy handling (flat/concat/stacked modes) │ ▼ Stage 4: Emit LLMD ──────── Generate @ : > -> :: lines (pre-compression) ├── classifyTable(): property / keyed_multi / raw ├── Column header emission (:_col, :_cols) ├── Chunked KV emission (max_kv_per_line) ├── Common prefix extraction (:_pfx) └── Boolean/enum compression (c2+) │ ▼ Stage 5: Compress ────────── Apply c0→c1→c2 passes │ ▼ Stage 6: Post-process ───── Anchors, validation │ ▼ LLMD Output
+>>>
+>---
+@directory_structure
+::code
+<<<
+llmd/ ├── LLMD Specification - v0.1.md # Format spec (line types, scoping rules) ├── LLMD Compiler Design v0.1.md # 6-stage compiler pipeline spec ├── README.md ├── LICENSE │ ├── config/ │ └── llmdc.config.json # Compiler configuration │ ├── tools/ │ ├── js/ # Node.js implementations │ │ └── llmdc.js # Compiler │ └── py/ # Python implementations │ └── llmdc.py # Compiler │ └── corpora/ └── samples/ # Sample documents for testing
+>>>
+>---
+@file_relationships
+::code
+<<<
+┌─────────────────────┐ │ Specification Docs │ │ (Format, Compiler) │ └─────────┬───────────┘ │ defines ▼ ┌──────────────┐ ┌──────────────┐ │ config/ │ │ corpora/ │ │ llmdc.config│ │ samples/ │ └──────┬───────┘ └──────┬───────┘ │ │ ▼ ▼ ┌────────────────────────────────────────┐ │ tools/ (js/ and py/) │ │ llmdc ◄── config + source docs │ └────────────────────────────────────────┘
+>>>
+>---
+@determinism_guarantees
+>entire system is designed to be 100% deterministic:
+>File ordering: Always sorted lexicographically
+>Config-driven: Stopwords, phrase maps are fixed JSON
+>No randomness: Output is purely function of input + config
+>---
+@compression_example
+>Input (Markdown, ~64 tokens):
+::markdown
+<<<
+## Authentication The API supports authentication via OAuth2 and API keys. - Use OAuth2 for user-facing apps. - Use API keys for server-to-server. Rate limit: 1000 requests per minute.
+>>>
+>Output (LLMD c2, ~35 tokens):
+::code
+<<<
+@auth :methods=oauth2|apikey rate=1000/m >oauth2 user-app >apikey svc-svc
+>>>
+@table_compression_example
+>Input (3-column CSS component table):
+::markdown
+<<<
+| Class | Child Class | Where | |-------|-------------|-------| | flm-button-label | Primary text | compound button | | flm-button-description | Secondary text | compound button |
+>>>
+>Output (LLMD c2, keyed_multi classification):
+::code
+<<<
+:_cols=class|child_class|where :flm-button-label=Primary text|compound button :flm-button-description=Secondary text|compound button
+>>>
+@prefix_extraction_example
+>Input (property table with shared prefix):
+::markdown
+<<<
+| Class | Effect | |-------|--------| | flm-text--secondary | Color: --bodySubtext | | flm-text--disabled | Color: --disabledText | | flm-text--error | Color: --errorText |
+>>>
+>Output (LLMD c2, with prefix extraction):
+::code
+<<<
+:_pfx=flm-text-- :secondary=Color: --bodySubtext disabled=Color: --disabledText :error=Color: --errorText
+>>>
+>---
+@dual_implementation_strategy
+>compiler is implemented in both JavaScript (Node.js 18+) and Python (3.10+) for portability. No external dependencies required.
