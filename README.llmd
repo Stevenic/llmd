@@ -1,0 +1,110 @@
+@llmd__llm-optimized_deterministic_markdown
+>LLMD is deterministic compiler system converts Markdown into compact, token-efficient format designed for LLM context windows. It replaces verbose hierarchical Markdown with implicit scoping, structured attributes, and configurable compression — reducing token counts while preserving semantic recoverability.
+>Author: Steven Ickman | License: MIT
+>---
+@quick_start
+::bash
+<<<
+# Install JS dependencies cd tools/js && npm install && cd ../.. # Compile a Markdown file at compression level 2 node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd # Compile an entire directory node tools/js/llmdc.js corpora/samples/ -c 2 -o output.llmd # Generate a dictionary from a corpus, then compile at c3 node tools/js/dcs_auto.js config/auto_config.json dict/llmd-auto.dict.json corpora/samples/ node tools/js/llmdc.js corpora/samples/ -c 3 --dict dict/llmd-core.dict.json --dict dict/llmd-auto.dict.json -o output.llmd
+>>>
+>Python equivalents are available in tools/py/ (requires pip install -r tools/py/requirements.txt for dictionary validation).
+>---
+@what_it_looks_like
+>Markdown input:
+::markdown
+<<<
+## Authentication The API supports authentication via OAuth2 and API keys. - Use OAuth2 for user-facing apps. - Use API keys for server-to-server. Rate limit: 1000 requests per minute.
+>>>
+>LLMD output (c2):
+::code
+<<<
+@auth :rate_limit=1000/m >API supports authentication via OAuth2 API keys. >OAuth2 user-facing apps. >API keys server-to-server.
+>>>
+:every_line_starts_with_a_type_prefix=@ scope, : attribute, > content, :: code block, -> relation.
+>---
+@when_to_use_llmd
+@stuffing_reference_docs_into_llm_context
+>You have API docs, component libraries, or style guides need to fit in system prompt or RAG chunk. LLMD strips markdown formatting overhead while keeping content machine-readable.
+@cssdesign_system_references
+>Component tables with class names like flm-button--primary compress well — compiler preserves hyphens in keys, extracts common prefixes, and retains column semantics so LLM can generate correct markup.
+@api_specification_compression
+>Endpoint tables, parameter lists, and status code references convert naturally to :k=v attributes and > items. Code examples pass through untouched inside :: blocks.
+@multi-document_context_packing
+>When you need to fit several documents into single context window, compile directory at c2 or c3. compiler handles file ordering deterministically and merges everything into one .llmd output.
+@agentic_tool_context
+>Feed .llmd files as tool/function descriptions or system instructions to agents. format is designed so LLMs can parse scoped structure without explicit instructions.
+>---
+@project_structure
+::code
+<<<
+llmd/ ├── README.md # This file ├── LICENSE # MIT │ ├── LLMD Specification - v0.1.md # Format spec (line types, scoping, normalization) ├── LLMD Compiler Design v0.1.md # 6-stage pipeline spec ├── LLMD Dictionary Compression System (DCS) v1.0.md # DCS spec ├── DCS-AUTO v0.1.md # Auto dictionary generation spec │ ├── .architecture/ │ └── ARCHITECTURE.md # System overview and diagrams │ ├── docs/ # Tool reference documentation │ ├── llmdc.md # Compiler reference │ ├── dcs-auto.md # Dictionary generator reference │ ├── validate-dict.md # Dictionary validator reference │ ├── bench.md # Benchmark tool reference │ └── *.llmd # Pre-compiled LLMD versions │ ├── config/ │ ├── llmdc.config.json # Compiler config (stopwords, phrases, units) │ └── auto_config.json # DCS-AUTO generator settings │ ├── schema/ │ └── llmd-dcs-dictionary.schema.json # JSON Schema for dictionary files │ ├── dict/ │ └── llmd-core.dict.json # Hand-curated core dictionary │ ├── tools/ │ ├── js/ # Node.js implementations │ │ ├── llmdc.js # Compiler │ │ ├── dcs_auto.js # Dictionary generator │ │ ├── validate-dict.js # Dictionary validator │ │ └── bench.js # Token reduction benchmark │ └── py/ # Python implementations │ ├── llmdc.py # Compiler │ ├── dcs_auto.py # Dictionary generator │ ├── validate_dict.py # Dictionary validator │ └── bench.py # Token reduction benchmark │ └── corpora/ └── samples/ # Sample documents for testing ├── api-spec.md └── fluentlm-components.md
+>>>
+>---
+@tools
+:_cols=tool|js|python|purpose
+>llmdc|tools/js/llmdc.js|tools/py/llmdc.py|Compile Markdown → LLMD
+>dcs_auto|tools/js/dcs_auto.js|tools/py/dcs_auto.py|Generate dictionaries from corpora
+>validate-dict|tools/js/validate-dict.js|tools/py/validate_dict.py|Validate dictionary against schema
+>bench|tools/js/bench.js|tools/py/bench.py|Measure token reduction
+:full_reference_docs=docs/
+>---
+@compression_levels
+:_cols=level|name|what_it_does
+>c0|Structural normalize|Whitespace cleanup, structure conversion
+>c1|Compact structure|Merge :k=v pairs, collapse blanks, prefix extraction
+>c2|Token compaction|Stopword removal, phrase/unit normalization, boolean compression
+>c3|Symbolic|Apply DCS dictionaries (scope/key/value/text/type maps)
+>---
+@key_features
+>Hyphen-preserving key normalization — CSS class names like flm-button--primary survive compilation intact
+>Table classification — 2-column property tables emit :k=v, 3+ column tables with identifier keys emit :key=v1|v2, others emit > rows with :_cols= headers
+>Common prefix extraction — When keys share prefix (e.g., flm-text--), it's factored out as :_pfx= to avoid repetition
+>Chunked KV emission — Large attribute groups split across multiple lines (max_kv_per_line, default 4)
+>Boolean compression — Columns of Yes/No, true/false, enabled/disabled → Y/N, T/F
+>Column header preservation — :_col= and :_cols= meta-attributes retain table column semantics
+>Code block passthrough — Fenced code blocks preserved exactly inside ::lang / <<< / >>> delimiters
+>Deterministic output — Same input + config always produces identical output
+>---
+@typical_workflow
+::bash
+<<<
+# 1. Compile your docs at c2 (good default) node tools/js/llmdc.js my-docs/ -c 2 -o context.llmd # 2. If you need more compression, generate a domain dictionary node tools/js/dcs_auto.js config/auto_config.json dict/my-auto.dict.json my-docs/ # 3. Validate the generated dictionary cd tools/js && node validate-dict.js ../../dict/my-auto.dict.json && cd ../.. # 4. Benchmark the dictionary's impact node tools/js/bench.js config/auto_config.json dict/my-auto.dict.json my-docs/ # 5. Compile at c3 with both dictionaries node tools/js/llmdc.js my-docs/ -c 3 \ --dict dict/llmd-core.dict.json \ --dict dict/my-auto.dict.json \ -o context.llmd
+>>>
+>---
+@using_with_agentic_coding_tools
+>LLMD works well with AI coding assistants like Claude Code and GitHub Copilot. These tools can automate compilation workflow, and .llmd files make efficient context for AI-driven tasks.
+@feed_llmd_as_context
+>Compiled .llmd files are smaller and cheaper to include in system prompts, tool descriptions, or RAG results. If your agent needs component reference or API spec, give it .llmd version instead of raw Markdown.
+@automate_compilation_in_your_workflow
+>Add instructions to your project's CLAUDE.md or Copilot instructions file:
+::markdown
+<<<
+## LLMD Compilation When documentation files in `docs/` are modified, recompile them: - Run `node tools/js/llmdc.js docs/ -c 2 -o docs/compiled.llmd` - The compiled output goes to `docs/compiled.llmd` - Always compile at c2 unless asked otherwise
+>>>
+@let_the_agent_run_the_full_pipeline
+>For Claude Code, you can ask it to run full compile-benchmark cycle in one shot:
+::code
+<<<
+Compile corpora/samples/ at c2 and c3, benchmark the difference, and tell me the token savings.
+>>>
+>agent can execute shell commands, read output, and summarize results without you needing to remember CLI arguments.
+@generate_domain_dictionaries_interactively
+::code
+<<<
+Generate a DCS dictionary from my API docs in docs/api/, validate it, then show me the top 10 entries by token savings.
+>>>
+>agent handles dcs_auto → validate-dict → bench pipeline and presents results conversationally.
+@tips_for_best_results
+>Point agent at docs/ — reference docs in docs/*.md describe every CLI option and config key. agent reads these can run any tool correctly.
+>Use config files — config/llmdc.config.json and config/auto_config.json are self-documenting. Agents can read and modify them for tuning.
+>Check schema — schema/llmd-dcs-dictionary.schema.json defines valid dictionary structure. Agents can use it to generate or validate dictionaries programmatically.
+>Compare c2 vs c3 — Ask agent to compile at both levels and compare. c2 is lossless for identifiers; c3 trades readability for more compression.
+>Batch compile on change — Set up hook or ask agent to recompile whenever source docs change, so .llmd versions stay current.
+>---
+@specifications
+:_cols=document|description
+>LLMD Specification v0.1|Format definition: line types, scoping model, normalization rules, compression levels
+>Compiler Design v0.1|6-stage pipeline architecture, table classification, prefix extraction, config reference
+>DCS v1.0%20v1.0.md)|Dictionary format, namespace maps, matching policies, safety mechanisms
+>DCS-AUTO v0.1|Automatic dictionary generation algorithm, scoring, alias assignment
+>Architecture|System overview, component diagrams, file relationships

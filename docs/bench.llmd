@@ -1,0 +1,51 @@
+@bench__token_reduction_benchmark
+>Measures token reduction from applying DCS dictionary to corpus. Canonicalizes Markdown to LLMD c1-style lines, applies dictionary, and reports estimated token savings.
+>Available as both node tools/js/bench.js and python tools/py/bench.py.
+>---
+@usage
+::bash
+<<<
+# JavaScript node tools/js/bench.js config/auto_config.json dict/llmd-core.dict.json corpora/samples/ # Python python tools/py/bench.py config/auto_config.json dict/llmd-core.dict.json corpora/samples/
+>>>
+>---
+@arguments
+:_cols=position|description
+>1|Config file (JSON — same format as auto_config.json)
+>2|Dictionary file (JSON — DCS dictionary format)
+>3+|Input files or directories
+>---
+@output
+::code
+<<<
+Files: 2 Est tokens BEFORE: 1450 Est tokens AFTER : 1180 Saved: 270 (18.6% reduction, final size 81.4%)
+>>>
+:files=Number of input files processed est_tokens_before=Estimated tokens after c1 canonicalization (before dictionary) est_tokens_after=Estimated tokens after dictionary application saved=Token delta, percentage reduction, and final size percentage
+>---
+@algorithm
+>Collect files — Recursively find all files in input paths, sorted lexicographically
+>Canonicalize — Convert each file to LLMD c1-style lines:
+>. Headings → @scope (lowercased, spaces→_)
+>. Lists → >text
+>. KV lines → :key=value
+>. Everything else → >text
+>. Code blocks optionally stripped (ignore_blocks config)
+>Apply dictionary — Token-mode replacement across namespaces:
+>. @scope lines → scope map
+>. :k=v lines → key map on keys, value map on enum-like value parts
+>. >text lines → text map on individual tokens
+>. ::type lines → type map
+>Estimate tokens — Heuristic: sum(ceil(len(token) / 4)) per whitespace-split token
+>Report — Before/after token counts and reduction percentage
+>---
+@config
+>Uses same config format as dcs_auto. relevant field is:
+:_cols=key|type|default|description
+>ignore_blocks|bool|true|Skip fenced code blocks during canonicalization
+>---
+@dictionary_format
+>Expects JSON file conforming to DCS Dictionary Schema. bench tool uses maps object (namespace→{source→alias} mappings) to perform token-mode replacements.
+>---
+@notes
+>token estimation heuristic (ceil(len/4)) approximates BPE tokenization without requiring tokenizer dependency
+>Dictionary application uses simple whole-token matching (case-insensitive for scope/key, case-preserving for text)
+>Value substitution only applies to enum-like tokens: must start with letter, contain only [A-Za-z0-9._-], and not be numeric or URL-like

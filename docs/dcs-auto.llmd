@@ -1,0 +1,60 @@
+@dcs_auto__dcs_automatic_dictionary_generator
+>Generates DCS dictionaries from source corpora using frequency analysis. No LLM calls required.
+>Available as both node tools/js/dcs_auto.js and python tools/py/dcs_auto.py.
+>---
+@usage
+::bash
+<<<
+# Generate dictionary from a corpus directory node tools/js/dcs_auto.js config/auto_config.json dict/llmd-auto.dict.json corpora/samples/ # With a base dictionary (auto-generated entries won't collide with it) node tools/js/dcs_auto.js config/auto_config.json dict/llmd-auto.dict.json corpora/ --base dict/llmd-core.dict.json # Python equivalent python tools/py/dcs_auto.py config/auto_config.json dict/llmd-auto.dict.json corpora/
+>>>
+>---
+@arguments
+:_cols=position|description
+>1|Config file path (JSON)
+>2|Output dictionary file path
+>3+|Input files or directories
+:_cols=flag|description
+>--base <path>|Base dictionary to avoid alias/key collisions with
+>---
+@config_file
+>See config/auto_config.json for default configuration.
+:_cols=key|type|default|description
+>min_len|int|6|Minimum token length to consider
+>min_freq|int|3|Minimum frequency to consider
+>max_entries|int|256|Maximum dictionary entries
+>min_gain|int|10|Minimum total token gain to include
+>alias_style|string|"ns_base36"|Alias naming strategy
+>namespaces|object|all true|Enable/disable namespace extraction
+>ignore_blocks|bool|true|Skip fenced code blocks
+>strict_no_alias_equals_source_token|bool|true|Prevent aliases match source tokens
+>stoplist|string[]|see config|Words excluded from candidacy
+>protect.negations|string[]|["no","not","never"]|Protected negation words
+>protect.modals|string[]|["must","should","may"]|Protected modal words
+>---
+@algorithm
+>Canonicalize — Each source file is converted to LLMD c1-style lines (headings→@scope, lists→>text, KV→:k=v)
+>Extract tokens — Tokens extracted by namespace (@scope, :key, :value, >text), lowercased
+>Filter — Reject tokens shorter than min_len, below min_freq, in stoplist/protect lists, numeric, URLs, or already in base dictionary keys
+>Score — total_gain = frequency × max(0, est_tokens(token) - est_tokens(alias))
+>Deduplicate — If token appears in multiple namespaces, keep only highest-priority one (key > scope > value > text)
+>Rank — Sort by total_gain desc, token length desc, frequency desc, token asc
+>Cap — Take top max_entries candidates
+>Assign aliases — Deterministic ns_base36 format: s0, s1, ... (scope), k0, k1, ... (key), etc. Aliases skip reserved prefixes and collisions with base dictionary or source tokens
+>---
+@output_format
+>Produces JSON file conforming to DCS Dictionary Schema:
+::json
+<<<
+{ "version": "1.0", "policy": { "case": "smart", "match": "token", "longest_match": true, "normalize_unicode": "NFKC", "max_passes": 1, "enable_global": false }, "maps": { "scope": { "authentication": "s0" }, "key": { "methods": "k0" }, "value": { "oauth2": "v0" }, "text": { "service": "t0" }, "type": {} } }
+>>>
+>All map keys are sorted lexicographically for deterministic output.
+>---
+@token_estimation
+:uses_a_heuristic=sum(ceil(len(token) / 4)) over whitespace-split tokens. This approximates BPE token counts without requiring a tokenizer.
+>---
+@namespace_priority
+>When same token appears in multiple namespaces, only highest-priority namespace is kept:
+>key (highest)
+>scope
+>value
+>text (lowest)

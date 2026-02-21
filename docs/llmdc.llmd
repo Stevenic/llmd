@@ -1,0 +1,92 @@
+@llmdc__llmd_compiler
+>Compiles Markdown files into LLMD token-optimized format through 6-stage pipeline.
+>Available as both node tools/js/llmdc.js and python tools/py/llmdc.py.
+>---
+@usage
+::bash
+<<<
+# Basic compilation (defaults to c2) llmdc input.md # Compile to file at compression level 2 llmdc input.md -o output.llmd -c 2 # Compile a directory llmdc docs/ -c 2 -o out.llmd # With dictionary (c3) llmdc input.md -c 3 --dict dict/llmd-core.dict.json -o out.llmd # Multiple dictionaries (later overrides earlier) llmdc input.md -c 3 --dict dict/llmd-core.dict.json --dict dict/llmd-auto.dict.json
+>>>
+>---
+@options
+:_cols=option|description|default
+>-o, --output <path>|Output file (stdout if omitted)|stdout
+>-c, --compression <0-3>|Compression level|from config or 2
+>--dict <path>|DCS dictionary file (repeatable)|none
+>--scope-mode <mode>|flat, concat, or stacked|flat
+>--keep-urls|Preserve URLs at c2+|false
+>--sentence-split|Split sentences into separate > lines at c2+|false
+>--anchor-every <n>|Re-emit @scope every N lines|0 (off)
+>--config <path>|Config file path|auto-detect
+>-h, --help|Show help|
+>---
+@config_file
+>Auto-detected from llmdc.config.json or config/llmdc.config.json. CLI flags override config values.
+>See config/llmdc.config.json for full default configuration.
+:_cols=key|type|default|description
+>compression|int|2|Compression level (0-3)
+>scope_mode|string|"flat"|Scope resolution mode
+>keep_urls|bool|false|Preserve URLs at c2+
+>sentence_split|bool|false|Split sentences at c2+
+>anchor_every|int|0|Scope anchor interval (0 = off)
+>max_kv_per_line|int|4|Max key-value pairs per : line
+>prefix_extraction|bool|true|Enable common prefix extraction
+>min_prefix_len|int|6|Minimum prefix length to extract
+>min_prefix_pct|float|0.6|Minimum % of keys sharing prefix
+>bool_compress|bool|true|Compress boolean values at c2+
+>stopwords|string[]|see config|Words removed from > lines at c2+
+>protect_words|string[]|see config|Words never removed
+>phrase_map|object|see config|Phrase replacements at c2+
+>units|object|see config|Unit normalizations at c2+
+>---
+@pipeline
+@stage_0_normalize
+>UTF-8 decode, NFKC unicode normalization, line ending normalization, trailing whitespace trim.
+@stage_1_extract_blocks
+>Fenced code blocks replaced with ⟦BLOCK:n⟧ placeholders. Block content is preserved verbatim.
+@stage_2_parse_to_ir
+:lightweight_state_machine_producing_ir_nodes=Heading, Paragraph, ListItem, Table, KVLine, Blank, BlockRef.
+@stage_3_scope_resolution
+>Headings map to @scope declarations via normScopeName() (trim, spaces→_, lowercase at c2+, strip punctuation except _ and -).
+@stage_4_emit_llmd
+>Walk IR and generate LLMD lines:
+>Headings → @scope
+>Paragraphs → >text (optionally sentence-split at c2+)
+>Lists → >item with . depth prefixes
+>KV lines → :key=value (buffered, chunked by max_kv_per_line)
+>Tables → classified via classifyTable():
+>. property (2-col, unique identifier-like keys) → :k=v pairs, with optional :_col=<header>
+>. keyed_multi (3+ col, unique identifier-like keys) → :_cols=h1|h2|h3 then :key=v1|v2
+>. raw (everything else) → :_cols=h1|h2|h3 then >c1|c2|c3
+>Code blocks → ::lang + <<< content >>>
+@key_normalization_normkey
+>Lowercase, spaces→_, strip punctuation except _ and -, trim leading/trailing -.
+@common_prefix_extraction
+>When ≥60% of keys in KV buffer share prefix of ≥6 chars, emits :_pfx=<prefix> and strips prefix from matching keys.
+@boolean_compression_c2
+>Table columns where all values are boolean-like (Yes/No, true/false, enabled/disabled) are mapped to compact forms (Y/N, T/F).
+@stage_5_compression_passes
+>Applied progressively, skipping block content:
+:_cols=level|name|transformations
+:c0=Normalize|Whitespace normalize, blank line collapse c1=Compact|Merge consecutive :k=v, prefix extraction c2=Token compact|Stopword removal, phrase map, unit normalization, boolean compression c3=Symbolic|Apply DCS dictionary maps across all namespaces
+@stage_6_post-process
+>Validation (no scoped lines before first @), optional scope anchors.
+>---
+@input_formats
+>.md, .markdown — Markdown files
+>.llmd — passthrough/normalize mode
+>Directories — recursively scanned for matching files (sorted lexicographically)
+@output_format
+>.llmd text file. See LLMD Specification for line type reference.
+>---
+@examples
+@input
+::markdown
+<<<
+## Text Styles | Class | Effect | |-------|--------| | flm-text--secondary | Color: --bodySubtext | | flm-text--disabled | Color: --disabledText | | flm-text--error | Color: --errorText |
+>>>
+@output_c2
+::code
+<<<
+@text_styles :_cols=class|effect >flm-text--secondary|Color: --bodySubtext >flm-text--disabled|Color: --disabledText >flm-text--error|Color: --errorText
+>>>

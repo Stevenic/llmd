@@ -109,6 +109,24 @@ Example:
 
 Preferred over prose whenever possible.
 
+### Reserved Meta-Attributes
+
+Keys prefixed with `_` are reserved for compiler-generated metadata:
+
+* `:_col=<header>` — column header for a 2-column property table (emitted when the value column header is informative)
+* `:_cols=col1|col2|col3` — column headers for a multi-column table
+* `:_pfx=<prefix>` — common prefix extracted from subsequent keys; the reader should prepend this prefix to restore full key names
+
+### Chunked Emission
+
+At c1+, consecutive `:k=v` pairs are merged onto one line. When the number of pairs exceeds `max_kv_per_line` (default 4), they are split across multiple `:` lines for chunk-safe splitting:
+
+```
+:k1=v1 k2=v2 k3=v3 k4=v4
+:k5=v5 k6=v6 k7=v7 k8=v8
+:k9=v9
+```
+
 ---
 
 ## 4.3 Item Line
@@ -333,13 +351,17 @@ Always:
 
 * Lowercase
 * Spaces → `_`
-* Strip punctuation except `_`
+* Strip punctuation except `_` and `-`
+* Trim leading/trailing `-`
 
 Example:
 
 ```
 Rate Limit → rate_limit
+flm-text--secondary → flm-text--secondary
 ```
+
+Preserving `-` is critical for CSS class names and other hyphenated identifiers.
 
 ---
 
@@ -387,8 +409,6 @@ LLMD v0.1 (c2):
 ```
 
 ~27 tokens
-~58% reduction
-~42% final size
 
 No repeated paths.
 No verbose prose.

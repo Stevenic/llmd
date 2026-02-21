@@ -1,0 +1,41 @@
+{
+  "compression": 2,
+  "scope_mode": "flat",
+  "keep_urls": false,
+  "sentence_split": false,
+  "anchor_every": 0,
+  "max_kv_per_line": 4,
+  "prefix_extraction": true,
+  "min_prefix_len": 6,
+  "min_prefix_pct": 0.6,
+  "bool_compress": true,
+  "stopwords": ["the", "a", "an", "really", "just", "that", "very", "quite", "basically", "simply"],
+  "protect_words": ["no", "not", "never", "must", "should", "may"],
+  "phrase_map": {
+    "in order to": "to",
+    "as well as": "|",
+    "due to": "because",
+    "is able to": "can",
+    "such as": "e.g.",
+    "for example": "e.g.",
+    "as a result": "so",
+    "on the other hand": "but",
+    "in addition to": "and",
+    "with respect to": "re",
+    "in terms of": "re"
+  },
+  "units": {
+    "requests per minute": "/m",
+    "requests per second": "/s",
+    "requests per hour": "/h",
+    "per minute": "/m",
+    "per second": "/s",
+    "per hour": "/h",
+    "milliseconds": "ms",
+    "seconds": "s",
+    "minutes": "min",
+    "megabytes": "MB",
+    "gigabytes": "GB",
+    "kilobytes": "KB"
+  }
+}

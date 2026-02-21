@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llmd.dev/schema/dcs-dictionary-1.0.schema.json",
+  "title": "LLMD DCS Dictionary File",
+  "description": "Schema for LLMD Dictionary Compression System (DCS) dictionary files.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "maps"],
+  "properties": {
+    "version": {
+      "description": "DCS dictionary schema/version identifier.",
+      "type": "string",
+      "pattern": "^(1\\.0|1\\.0\\.[0-9]+)$"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "maps": {
+      "$ref": "#/$defs/maps"
+    },
+    "units": {
+      "$ref": "#/$defs/units"
+    },
+    "stop": {
+      "$ref": "#/$defs/stop"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tokenString": {
+      "description": "A compact token-like string for replacements (recommended).",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "mapObject": {
+      "description": "Mapping of source terms to replacement aliases.",
+      "type": "object",
+      "additionalProperties": false,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "patternProperties": {
+        "^.+$": {
+          "description": "Replacement alias. Use short ASCII tokens for best compression.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "maps": {
+      "description": "Namespace-scoped replacement maps.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "key", "value", "text", "type"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/mapObject" },
+        "key": { "$ref": "#/$defs/mapObject" },
+        "value": { "$ref": "#/$defs/mapObject" },
+        "text": { "$ref": "#/$defs/mapObject" },
+        "type": { "$ref": "#/$defs/mapObject" },
+        "global": { "$ref": "#/$defs/mapObject" }
+      }
+    },
+    "policy": {
+      "description": "Controls matching behavior and safety protections.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "case": {
+          "description": "Case handling strategy.",
+          "type": "string",
+          "enum": ["lower", "preserve", "smart"]
+        },
+        "match": {
+          "description": "Matching mode for dictionary application.",
+          "type": "string",
+          "enum": ["word", "token", "substring"]
+        },
+        "longest_match": {
+          "description": "If true, prefer the longest applicable key at each position.",
+          "type": "boolean",
+          "default": true
+        },
+        "normalize_unicode": {
+          "description": "Unicode normalization form applied before matching.",
+          "type": "string",
+          "enum": ["NFC", "NFD", "NFKC", "NFKD"]
+        },
+        "max_passes": {
+          "description": "Maximum replacement passes to allow (guards against loops).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1
+        },
+        "protect": {
+          "$ref": "#/$defs/protect"
+        },
+        "value_eligibility": {
+          "$ref": "#/$defs/valueEligibility"
+        },
+        "enable_global": {
+          "description": "If true, apply maps.global where allowed by the implementation.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "protect": {
+      "description": "Safety controls to avoid altering meaning-critical tokens.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "negations": {
+          "description": "If true, protect negations like no/not/never from removal/rewrite where applicable.",
+          "type": "boolean",
+          "default": true
+        },
+        "modals": {
+          "description": "If true, protect modal verbs like must/should/may from removal/rewrite where applicable.",
+          "type": "boolean",
+          "default": true
+        },
+        "numbers": {
+          "description": "If true, avoid dictionary substitution of purely numeric tokens.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "valueEligibility": {
+      "description": "Rules controlling whether attribute values are eligible for substitution.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow_enums": {
+          "description": "If true, allow substitutions for enum-like tokens (recommended).",
+          "type": "boolean",
+          "default": true
+        },
+        "allow_paths": {
+          "description": "If true, allow substitutions for path-like strings in values.",
+          "type": "boolean",
+          "default": false
+        },
+        "allow_free_text": {
+          "description": "If true, allow substitutions inside free text values (not recommended).",
+          "type": "boolean",
+          "default": false
+        },
+        "deny_patterns": {
+          "description": "Regex patterns; if a value matches any deny pattern, it is not eligible for substitution.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "units": {
+      "description": "Optional deterministic unit normalization map (e.g., 'requests per minute' -> '/m').",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "map": {
+          "description": "Maps unit phrases to compact forms.",
+          "type": "object",
+          "additionalProperties": false,
+          "propertyNames": { "type": "string", "minLength": 1 },
+          "patternProperties": {
+            "^.+$": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      }
+    },
+    "stop": {
+      "description": "Optional stopword and protected-word sets, typically used at compression level c2+.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "c2": {
+          "description": "Stopwords to remove at compression level c2 (typically only in item text lines).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        },
+        "c3": {
+          "description": "Stopwords to remove at compression level c3 (typically only in item text lines).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        },
+        "protect": {
+          "description": "Words that must not be removed (negations, modals, etc.).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

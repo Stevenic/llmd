@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "policy": {
+    "case": "smart",
+    "match": "token",
+    "longest_match": true,
+    "normalize_unicode": "NFKC",
+    "max_passes": 1,
+    "enable_global": false,
+    "protect": {
+      "negations": true,
+      "modals": true,
+      "numbers": true
+    },
+    "value_eligibility": {
+      "allow_enums": true,
+      "allow_paths": false,
+      "allow_free_text": false,
+      "deny_patterns": [
+        "^https?://",
+        "^[0-9]+$"
+      ]
+    }
+  },
+  "maps": {
+    "scope": {
+      "authentication": "auth",
+      "authorization": "authz",
+      "configuration": "cfg",
+      "database": "db",
+      "performance": "perf"
+    },
+    "key": {
+      "methods": "m",
+      "rate_limit": "rate",
+      "configuration": "cfg",
+      "timeout_seconds": "t_s"
+    },
+    "value": {
+      "oauth2": "O2",
+      "apikey": "K",
+      "required": "req",
+      "optional": "opt"
+    },
+    "text": {
+      "server-to-server": "svc-svc",
+      "user-facing": "usr",
+      "application": "app",
+      "service": "svc"
+    },
+    "type": {
+      "javascript": "js",
+      "typescript": "ts",
+      "json": "json",
+      "yaml": "yml"
+    }
+  },
+  "units": {
+    "map": {
+      "requests per minute": "/m",
+      "milliseconds": "ms",
+      "seconds": "s"
+    }
+  },
+  "stop": {
+    "c2": ["the", "a", "an", "very", "really", "just", "that"],
+    "c3": ["also", "basically"],
+    "protect": ["no", "not", "never", "must", "should", "may"]
+  }
+}

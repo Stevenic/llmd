@@ -1,0 +1,15 @@
+{
+  "name": "llmd-tools",
+  "version": "0.1.0",
+  "description": "LLMD compiler and tooling",
+  "type": "module",
+  "scripts": {
+    "llmdc": "node llmdc.js",
+    "validate-dict": "node validate-dict.js",
+    "dcs-auto": "node dcs_auto.js",
+    "bench": "node bench.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}
