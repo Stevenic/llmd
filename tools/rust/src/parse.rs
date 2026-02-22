@@ -2,6 +2,9 @@ use crate::ir::IrNode;
 use regex::Regex;
 use std::sync::LazyLock;
 
+static RE_THEMATIC_BREAK: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[-*_]{3,}$").unwrap());
+
 static RE_HEADING: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(#{1,6})\s+(.+)$").unwrap());
 static RE_UL: LazyLock<Regex> =
@@ -60,6 +63,12 @@ pub fn stage2(lines: &[String]) -> Vec<IrNode> {
 
         if t.is_empty() {
             ir.push(IrNode::Blank);
+            i += 1;
+            continue;
+        }
+
+        // Skip thematic breaks (---, ***, ___)
+        if RE_THEMATIC_BREAK.is_match(t) {
             i += 1;
             continue;
         }

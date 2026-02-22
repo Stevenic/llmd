@@ -1,5 +1,21 @@
 use crate::config::Config;
 
+fn is_text_line(line: &str) -> bool {
+    if line.is_empty() {
+        return false;
+    }
+    !line.starts_with('@')
+        && !line.starts_with(':')
+        && !line.starts_with('-')
+        && !line.starts_with('~')
+        && !line.starts_with("::")
+        && !line.starts_with("<<<")
+        && !line.starts_with(">>>")
+        && !line.starts_with('\u{2192}')
+        && !line.starts_with('\u{2190}')
+        && !line.starts_with('=')
+}
+
 pub fn stage6(lines: &[String], config: &Config) -> Vec<String> {
     let anchor_every = config.anchor_every;
 
@@ -27,7 +43,12 @@ pub fn stage6(lines: &[String], config: &Config) -> Vec<String> {
             continue;
         }
         if !first_scope
-            && (line.starts_with(':') || line.starts_with('>') || line.starts_with("->"))
+            && (line.starts_with(':')
+                || line.starts_with('-')
+                || line.starts_with('\u{2192}')
+                || line.starts_with('\u{2190}')
+                || line.starts_with('=')
+                || is_text_line(line))
         {
             eprintln!(
                 "validation warning: line {}: scoped line before first @scope",
@@ -74,14 +95,14 @@ mod tests {
         config.anchor_every = 2;
         let lines = vec![
             "@scope".to_string(),
-            ">line1".to_string(),
-            ">line2".to_string(),
-            ">line3".to_string(),
+            "-line1".to_string(),
+            "-line2".to_string(),
+            "-line3".to_string(),
         ];
         let result = stage6(&lines, &config);
         assert_eq!(
             result,
-            vec!["@scope", ">line1", "@scope", ">line2", ">line3"]
+            vec!["@scope", "-line1", "@scope", "-line2", "-line3"]
         );
     }
 
@@ -89,8 +110,8 @@ mod tests {
     fn test_no_anchors() {
         let mut config = Config::default();
         config.anchor_every = 0;
-        let lines = vec!["@scope".to_string(), ">line1".to_string()];
+        let lines = vec!["@scope".to_string(), "-line1".to_string()];
         let result = stage6(&lines, &config);
-        assert_eq!(result, vec!["@scope", ">line1"]);
+        assert_eq!(result, vec!["@scope", "-line1"]);
     }
 }

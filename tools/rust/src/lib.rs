@@ -93,7 +93,8 @@ mod tests {
         let config = Config::default();
         let result = compile(input, &config);
         assert!(result.contains("@title"));
-        assert!(result.contains(">Some text."));
+        // v0.2: no > prefix on text, trailing period stripped
+        assert!(result.contains("Some text"));
     }
 
     #[test]

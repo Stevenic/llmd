@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(cd /c/source/llmd/tools/rust && cargo test 2>&1)",
+      "Bash(cd /c/source/llmd && node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd 2>&1)",
+      "Bash(cd /c/source/llmd && node tools/js/llmdc.js corpora/samples/deployment-guide.md -c 2 -o corpora/samples/deployment-guide.llmd 2>&1 && node tools/js/llmdc.js corpora/samples/api-spec.md -c 2 -o corpora/samples/api-spec.llmd 2>&1 && node tools/js/llmdc.js corpora/samples/fluentlm-components.md -c 2 -o corpora/samples/fluentlm-components.llmd 2>&1)",
+      "Bash(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y 2>&1)",
+      "Bash(export:*)",
+      "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /c/source/llmd/tools/rust && cargo test 2>&1)",
+      "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\" && rustup target add x86_64-pc-windows-gnu 2>&1 && rustup default stable-x86_64-pc-windows-gnu 2>&1)",
+      "Bash(which gcc 2>&1 && gcc --version 2>&1 | head -1 && which dlltool 2>&1)",
+      "Bash(head:*)"
+    ]
+  }
+}

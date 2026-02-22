@@ -268,18 +268,18 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                 for s in sentences {
                     let s = s.trim();
                     if !s.is_empty() {
-                        out.push(format!(">{}", s));
+                        out.push(s.to_string());
                     }
                 }
             }
             IrNode::ListItem { depth, text, .. } => {
                 ensure_scope(&mut current_scope, &mut out);
                 let text = process_text(text);
-                let prefix = ".".repeat(*depth);
-                if prefix.is_empty() {
-                    out.push(format!(">{}", text));
+                let depth_dots = ".".repeat(*depth);
+                if depth_dots.is_empty() {
+                    out.push(format!("-{}", text));
                 } else {
-                    out.push(format!(">{} {}", prefix, text));
+                    out.push(format!("-{} {}", depth_dots, text));
                 }
             }
             IrNode::Kv { key, value } => {
@@ -289,10 +289,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                 if !k.is_empty() {
                     kv_buffer.push(KvPair { key: k, value: v });
                 } else {
-                    out.push(format!(
-                        ">{}",
-                        process_text(&format!("{}: {}", key, value))
-                    ));
+                    out.push(process_text(&format!("{}: {}", key, value)));
                 }
             }
             IrNode::Table { rows } => {
@@ -328,10 +325,9 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                             if !k.is_empty() {
                                 kv_buffer.push(KvPair { key: k, value: v });
                             } else {
-                                out.push(format!(
-                                    ">{}",
-                                    process_text(&format!("{}|{}", r[0], r[1]))
-                                ));
+                                out.push(
+                                    process_text(&format!("{}|{}", r[0], r[1])),
+                                );
                             }
                         }
                     }
@@ -357,7 +353,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                                     .enumerate()
                                     .map(|(ci, c)| process_cell(c, ci, &bool_cols))
                                     .collect();
-                                out.push(format!(">{}", cells.join("|")));
+                                out.push(cells.join("|"));
                             }
                         }
                     }
@@ -374,7 +370,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                                 .enumerate()
                                 .map(|(ci, c)| process_cell(c, ci, &bool_cols))
                                 .collect();
-                            out.push(format!(">{}", cells.join("|")));
+                            out.push(cells.join("|"));
                         }
                     }
                 }
@@ -417,7 +413,7 @@ mod tests {
         let config = Config::default();
         let result = emit_llmd(&ir, &[], &config);
         assert_eq!(result[0], "@title");
-        assert_eq!(result[1], ">content");
+        assert_eq!(result[1], "content");
     }
 
     #[test]
@@ -428,7 +424,7 @@ mod tests {
         let config = Config::default();
         let result = emit_llmd(&ir, &[], &config);
         assert_eq!(result[0], "@root");
-        assert_eq!(result[1], ">orphan text");
+        assert_eq!(result[1], "orphan text");
     }
 
     #[test]
@@ -559,8 +555,8 @@ mod tests {
         ];
         let config = Config::default();
         let result = emit_llmd(&ir, &[], &config);
-        assert!(result.contains(&">top".to_string()));
-        assert!(result.contains(&">. nested".to_string()));
+        assert!(result.contains(&"-top".to_string()));
+        assert!(result.contains(&"-. nested".to_string()));
     }
 
     #[test]

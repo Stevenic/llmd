@@ -1,4 +1,4 @@
-# LLMD v0.1 — Specification
+# LLMD v0.2 — Specification
 
 ---
 
@@ -23,12 +23,17 @@ Each non-empty line begins with exactly one of:
 ~   metadata
 @   scope declaration
 :   attribute line (scoped)
->   item line (scoped)
-->  relation (scoped)
+    plain text (no prefix — paragraphs, prose)
+-   list item (scoped, both ordered and unordered)
+→   forward relation (scoped)
+←   reverse relation (scoped)
+=   equivalence relation (scoped)
 ::  block start (scoped)
 ```
 
-Anything else is invalid outside a block.
+A line is plain text if it does not start with any of the above prefixes.
+
+Horizontal rules (`---`, `***`, `___`) are stripped during parsing and never appear in output.
 
 ---
 
@@ -55,7 +60,7 @@ Example:
 ```
 @Auth
 :methods=oauth2|apikey rate=1000/m
->oauth2 user-app
+-oauth2 user-app
 ```
 
 No repeated `Auth/...` prefixes.
@@ -129,52 +134,76 @@ At c1+, consecutive `:k=v` pairs are merged onto one line. When the number of pa
 
 ---
 
-## 4.3 Item Line
+## 4.3 Text Line
 
-Unstructured or semi-structured statement.
+Unstructured prose or paragraph content. Text lines have **no prefix** — they are plain text.
 
 ```
->text...
+platform requires minimum three application nodes
 ```
-
-No space required after `>` (saves tokens).
 
 Example:
 
 ```
->oauth2 user-app
->apikey svc-svc
+@auth
+API supports authentication via OAuth2 API keys
 ```
 
 Compiler MAY:
 
 * Remove stopwords (c2+)
 * Apply phrase map replacements (c2)
+* Strip trailing periods (c2)
 
 ---
 
-## 4.4 Relation Line
+## 4.4 List Item Line
+
+Both ordered and unordered Markdown lists compile to `-` prefixed lines.
+
+```
+-item text
+```
+
+Nested list depth uses `.` prefixes:
+
+* depth 0: `-item`
+* depth 1: `-. child`
+* depth 2: `-.. grandchild`
+
+Example:
+
+```
+@compute
+-Application nodes: 3 minimum
+-. high availability recommended
+-Worker nodes: 2 minimum
+```
+
+---
+
+## 4.5 Relation Line
 
 Declares relation from current scope.
 
 ```
-->Node
-<-Node
+→Node
+←Node
 =Node
 ```
 
 Optional uncertainty:
 
 ```
-->Node?
+→Node?
 ```
 
 Example:
 
 ```
 @API
-->DB
-->Cache?
+→DB
+→Cache?
 ```
 
 This means:
@@ -186,7 +215,7 @@ No repeated prefixes.
 
 ---
 
-## 4.5 Block Line
+## 4.6 Block Line
 
 Used for code or preserved literals.
 
@@ -259,6 +288,7 @@ This removes `/` token repetition.
 * Preserve most wording
 * Preserve URLs
 * Preserve punctuation
+* Strip horizontal rules (`---`, `***`, `___`)
 
 Goal: clean but not compressed.
 
@@ -266,7 +296,7 @@ Goal: clean but not compressed.
 
 ## c1 — Compact Structure
 
-* Convert lists → `>`
+* Convert lists → `-`
 * Convert `Key: Value` → `:k=v`
 * Collapse whitespace
 * Remove extra blank lines
@@ -285,6 +315,7 @@ Goal: clean but not compressed.
 * Normalize units:
 
   * "1000 requests per minute" → `1000/m`
+* Strip trailing periods from text and list lines (but not `...`, `e.g.`, `i.e.`, `etc.`)
 * Convert obvious sentences into attributes
 * Drop URLs unless flagged
 
@@ -364,16 +395,17 @@ The API supports authentication via OAuth2 and API keys.
 Rate limit: 1000 requests per minute.
 ```
 
-LLMD v0.1 (c2):
+LLMD v0.2 (c2):
 
 ```
-@Auth
-:methods=oauth2|apikey rate=1000/m
->oauth2 user-app
->apikey svc-svc
+@auth
+:rate_limit=1000/m
+API supports authentication via OAuth2 API keys
+-OAuth2 user-facing apps
+-API keys server-to-server
 ```
 
-~27 tokens
+~24 tokens
 
 No repeated paths.
 No verbose prose.
@@ -381,23 +413,21 @@ No unnecessary punctuation.
 
 ---
 
-# 10. Why v0.1 Compresses Better
+# 10. Why v0.2 Compresses Better
 
 Compared to v0.1:
 
 Removed:
 
-* Path repetition
-* Pipes in metadata
-* Repeated scope prefixes
-* Hierarchical separators
-* Verbose block headers
+* `>` prefix on every text line (saves 1 token per line)
+* Trailing periods on text and list lines
+* Horizontal rules (no semantic value)
 
-Everything now leans toward:
+Added:
 
-* Short scope
-* Short keys
-* Minimal structure
+* `-` prefix distinguishes list items from prose
+* `→` / `←` Unicode arrows replace `->` / `<-`
+* Expanded stopword and phrase map for more aggressive c2
 
 ---
 
@@ -408,7 +438,7 @@ Minimal pipeline:
 1. Extract Markdown structure
 2. Track current heading → scope
 3. Emit `@scope` when heading changes
-4. Convert lists → `>`
+4. Convert lists → `-`
 5. Convert simple pairs → `:k=v`
 6. Apply compression rules by level
 7. Emit file
@@ -417,7 +447,7 @@ No AST required (line-based parser is sufficient).
 
 ---
 
-# 12. Optional Future Extensions (Not in v0.1 Core)
+# 12. Optional Future Extensions (Not in v0.2 Core)
 
 * Stable scope IDs for chunk-safe slicing
 * Inline scope hash markers
@@ -427,7 +457,7 @@ No AST required (line-based parser is sufficient).
 
 # Final Summary
 
-LLMD v0.1 is:
+LLMD v0.2 is:
 
 * Scoped
 * Minimal

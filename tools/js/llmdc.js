@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================================
 // llmdc — LLMD Compiler (JavaScript)
-// Spec: LLMD v0.1 + Compiler Design v0.1
+// Spec: LLMD v0.2 + Compiler Design v0.2
 // ============================================================
 import fs from "fs";
 import path from "path";
@@ -126,6 +126,9 @@ function stage2(lines) {
     const t = line.trim();
 
     if (t === "") { ir.push({ type: "blank" }); i++; continue; }
+
+    // Skip thematic breaks (---, ***, ___)
+    if (/^[-*_]{3,}$/.test(t)) { i++; continue; }
 
     const blockM = t.match(RE_BLOCK_REF);
     if (blockM) { ir.push({ type: "block_ref", index: parseInt(blockM[1]) }); i++; continue; }
@@ -398,15 +401,15 @@ function emitLLMD(ir, blocks, config) {
         const text = processText(node.text);
         const sentences = splitSentences(text);
         for (const s of sentences) {
-          if (s.trim()) out.push(">" + s.trim());
+          if (s.trim()) out.push(s.trim());
         }
         break;
       }
       case "list_item": {
         ensureScope();
         const text = processText(node.text);
-        const prefix = ".".repeat(node.depth);
-        out.push(">" + prefix + (prefix ? " " : "") + text);
+        const depthDots = ".".repeat(node.depth);
+        out.push("-" + depthDots + (depthDots ? " " : "") + text);
         break;
       }
       case "kv": {
@@ -416,7 +419,7 @@ function emitLLMD(ir, blocks, config) {
         if (k) {
           kvBuffer.push({ key: k, value: v });
         } else {
-          out.push(">" + processText(node.key + ": " + node.value));
+          out.push(processText(node.key + ": " + node.value));
         }
         break;
       }
@@ -451,7 +454,7 @@ function emitLLMD(ir, blocks, config) {
             const k = normKey(rows[r][0]);
             const v = processCell(rows[r][1], 1);
             if (k) kvBuffer.push({ key: k, value: v });
-            else out.push(">" + processText(rows[r][0] + "|" + rows[r][1]));
+            else out.push(processText(rows[r][0] + "|" + rows[r][1]));
           }
         } else if (tableType === "keyed_multi") {
           // Emit column headers
@@ -464,18 +467,18 @@ function emitLLMD(ir, blocks, config) {
             if (k) kvBuffer.push({ key: k, value: vals.join("|") });
             else {
               const cells = rows[r].map((c, ci) => processCell(c, ci));
-              out.push(">" + cells.join("|"));
+              out.push(cells.join("|"));
             }
           }
         } else {
-          // Raw: emit column headers then >c1|c2|c3
+          // Raw: emit column headers then c1|c2|c3
           if (rows[0].length >= 2) {
             const colHeaders = rows[0].map(h => normKey(h)).join("|");
             out.push(":_cols=" + colHeaders);
           }
           for (let r = 1; r < rows.length; r++) {
             const cells = rows[r].map((c, ci) => processCell(c, ci));
-            out.push(">" + cells.join("|"));
+            out.push(cells.join("|"));
           }
         }
         break;
@@ -509,7 +512,10 @@ function compressC0(lines) {
   const out = [];
   for (const line of lines) {
     const t = line.replace(/\s+/g, " ").trim();
-    if (t) out.push(t);
+    if (!t) continue;
+    // Strip any residual horizontal rules
+    if (/^[-*_]{3,}$/.test(t) || t === ">---") continue;
+    out.push(t);
   }
   return out;
 }
@@ -518,6 +524,14 @@ function compressC0(lines) {
 function compressC1(lines) {
   return compressC0(lines);
   // Merging already handled during emission
+}
+
+function isTextLine(line) {
+  return line && !line.startsWith("@") && !line.startsWith(":") &&
+         !line.startsWith("-") && !line.startsWith("~") &&
+         !line.startsWith("::") && !line.startsWith("<<<") &&
+         !line.startsWith(">>>") && !line.startsWith("\u2192") &&
+         !line.startsWith("\u2190") && !line.startsWith("=");
 }
 
 // c2: token compaction — stopwords, phrase map, units
@@ -536,43 +550,63 @@ function compressC2(lines, config) {
 
     let text = line;
 
-    // Apply phrase map (case-insensitive) on > lines and : value parts
-    if (text.startsWith(">") || text.startsWith(":")) {
-      let body = text.startsWith(">") ? text.slice(1) : text.slice(1);
-      const prefix = text[0];
+    // Determine line type and extract body for compression
+    let linePrefix = "";
+    let body = "";
+    const isText = isTextLine(text);
+    const isList = text.startsWith("-");
+    const isAttr = text.startsWith(":");
 
-      // Sort phrase map keys by length desc for longest match
-      const phrases = Object.keys(phraseMap).sort((a, b) => b.length - a.length);
-      for (const phrase of phrases) {
-        const re = new RegExp(escapeRegex(phrase), "gi");
-        body = body.replace(re, phraseMap[phrase]);
-      }
-
-      // Apply unit normalization
-      const unitKeys = Object.keys(units).sort((a, b) => b.length - a.length);
-      for (const unit of unitKeys) {
-        // Match "N unit" pattern e.g. "1000 requests per minute" → "1000/m"
-        const reNum = new RegExp("(\\d+)\\s+" + escapeRegex(unit), "gi");
-        body = body.replace(reNum, "$1" + units[unit]);
-        // Also match standalone
-        const re = new RegExp(escapeRegex(unit), "gi");
-        body = body.replace(re, units[unit]);
-      }
-
-      text = prefix + body;
+    if (isText) {
+      linePrefix = "";
+      body = text;
+    } else if (isList) {
+      linePrefix = "-";
+      body = text.slice(1);
+    } else if (isAttr) {
+      linePrefix = ":";
+      body = text.slice(1);
+    } else {
+      return text;
     }
 
-    // Stopword removal on > lines only
-    if (text.startsWith(">")) {
-      const body = text.slice(1);
-      const tokens = body.split(/\s+/).filter(Boolean);
+    // Apply phrase map (case-insensitive) on text, list, and attribute lines
+    const phrases = Object.keys(phraseMap).sort((a, b) => b.length - a.length);
+    for (const phrase of phrases) {
+      const re = new RegExp(escapeRegex(phrase), "gi");
+      body = body.replace(re, phraseMap[phrase]);
+    }
+
+    // Apply unit normalization
+    const unitKeys = Object.keys(units).sort((a, b) => b.length - a.length);
+    for (const unit of unitKeys) {
+      const reNum = new RegExp("(\\d+)\\s+" + escapeRegex(unit), "gi");
+      body = body.replace(reNum, "$1" + units[unit]);
+      const re = new RegExp(escapeRegex(unit), "gi");
+      body = body.replace(re, units[unit]);
+    }
+
+    text = linePrefix + body;
+
+    // Stopword removal on text and list lines
+    if (isText || isList) {
+      const prefix2 = isList ? "-" : "";
+      const body2 = isList ? text.slice(1) : text;
+      const tokens = body2.split(/\s+/).filter(Boolean);
       const filtered = tokens.filter(t => {
         const low = t.toLowerCase().replace(/[^a-z]/g, "");
         if (!low) return true;
         if (protect.has(low)) return true;
         return !stopwords.has(low);
       });
-      text = ">" + filtered.join(" ");
+      text = prefix2 + filtered.join(" ");
+    }
+
+    // Trailing period stripping on text and list lines
+    if (isText || isList) {
+      if (text.endsWith(".") && !text.endsWith("...") && !text.endsWith("e.g.") && !text.endsWith("i.e.") && !text.endsWith("etc.")) {
+        text = text.slice(0, -1);
+      }
     }
 
     return text;
@@ -602,7 +636,7 @@ function stage6(lines, config) {
 
     if (line.startsWith("@")) { firstScope = true; continue; }
     if (line.startsWith("~")) continue;
-    if (!firstScope && (line.startsWith(":") || line.startsWith(">") || line.startsWith("->"))) {
+    if (!firstScope && (line.startsWith(":") || line.startsWith("-") || line.startsWith("\u2192") || line.startsWith("\u2190") || line.startsWith("=") || isTextLine(line))) {
       errors.push(`line ${i + 1}: scoped line before first @scope`);
     }
   }
@@ -702,7 +736,7 @@ Options:
   -c, --compression <0-2>   Compression level (default: from config or 2)
   --scope-mode <mode>       Scope mode: flat, concat, stacked (default: flat)
   --keep-urls               Keep URLs at c2+ (default: strip)
-  --sentence-split          Split sentences into separate > lines at c2+
+  --sentence-split          Split sentences into separate text lines at c2+
   --anchor-every <n>        Re-emit @scope every N lines (default: 0 = off)
   --config <path>           Config file path
   -h, --help                Show this help`);

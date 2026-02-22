@@ -1,12 +1,12 @@
-# LLMD Compiler Design v0.1 
+# LLMD Compiler Design v0.2
 
 ## Goals
 
 * Deterministic compilation: same input + config ⇒ same output
 * Token-first output (scoped `@`, no repeated prefixes)
 * Supports c0–c2 (structure → compaction)
-* Fast, streaming-friendly, simple to implement in JS/Python
-* Robust enough for “real markdown” (lists, headings, tables, code fences, links)
+* Fast, streaming-friendly, simple to implement in JS/Python/Rust
+* Robust enough for "real markdown" (lists, headings, tables, code fences, links)
 
 ---
 
@@ -31,12 +31,13 @@ Examples:
 
 ---
 
-# Output format reminders (v0.2 scoped)
+# Output format reminders (v0.2)
 
 * `@Scope` sets scope
 * `:k=v k=v` attributes under current scope
-* `>text` items under current scope
-* `->Scope` relations from current scope (optional)
+* `plain text` paragraphs under current scope (no prefix)
+* `-item` list items under current scope
+* `→Scope` / `←Scope` relations from current scope (optional)
 * `::type ... <<< >>>` blocks (optional)
 
 ---
@@ -79,6 +80,8 @@ A lightweight state machine (no full AST required) that emits an **intermediate 
 * `KVLine(key, value)` (extracted from `Key: Value`)
 * `Blank`
 * `BlockRef(index)` (placeholder)
+
+Thematic breaks (`---`, `***`, `___`) are detected and skipped — they produce no IR node.
 
 This pass should be conservative and deterministic.
 
@@ -137,19 +140,20 @@ Emit `@scope` when scope changes.
 
 #### Paragraphs
 
-Emit `>paragraph` (or sentence-split at c2+)
+Emit plain text (no prefix). Sentence-split at c2+ if enabled.
 
 #### Lists
 
-Emit `>item` under current scope.
-Nested list depth handling options:
+Emit `-item` under current scope.
+Nested list depth handling:
 
-* **default:** prefix depth in-text: `>.`, `>..`
+* **default:** prefix depth with dots after `-`: `-. child`, `-.. grandchild`
 
-  * depth 0: `>item`
-  * depth 1: `>. child`
-  * depth 2: `>.. grandchild`
-    This keeps v0.2 scoped semantics without introducing hierarchy tokens.
+  * depth 0: `-item`
+  * depth 1: `-. child`
+  * depth 2: `-.. grandchild`
+
+This keeps v0.2 scoped semantics without introducing hierarchy tokens.
 
 #### Key: Value lines
 
@@ -171,11 +175,11 @@ Example: `flm-text--secondary`, `flm-text--disabled`, `flm-text--error` → `:_p
 
 The compiler classifies each table using `classifyTable()`, which returns one of three types:
 
-* **`property`** — 2-column table with unique, identifier-like first column. Emit `:k=v` for each row. If the second column header is informative (not generic like “Value”/”Description”), emit `:_col=<header>` first.
+* **`property`** — 2-column table with unique, identifier-like first column. Emit `:k=v` for each row. If the second column header is informative (not generic like "Value"/"Description"), emit `:_col=<header>` first.
 * **`keyed_multi`** — 3+ column table with unique, identifier-like first column. Emit `:_cols=col1|col2|col3` header, then `:key=val1|val2` for each row.
-* **`raw`** — anything else (non-unique keys, prose-like first column, inconsistent column counts). Emit `:_cols=col1|col2|col3` header, then `>c1|c2|c3` per row.
+* **`raw`** — anything else (non-unique keys, prose-like first column, inconsistent column counts). Emit `:_cols=col1|col2|col3` header, then `c1|c2|c3` per row (plain text, no prefix).
 
-A column is “identifier-like” when its values are unique across all data rows, start with a letter/dot/hyphen, and contain no more than 4 whitespace-delimited words.
+A column is "identifier-like" when its values are unique across all data rows, start with a letter/dot/hyphen, and contain no more than 4 whitespace-delimited words.
 
 At c2+, boolean/enum value compression applies to columns where every value is boolean-like (`Yes/No`, `true/false`, `enabled/disabled`), mapping them to compact forms (`Y/N`, `T/F`).
 
@@ -198,6 +202,7 @@ Apply progressively, skipping block content.
 #### c0: normalize only
 
 * whitespace normalize
+* strip residual horizontal rules
 * no rewriting besides structure conversion
 
 #### c1: structural compaction
@@ -209,13 +214,16 @@ Apply progressively, skipping block content.
 
 #### c2: token compaction
 
-Only affects `>` and sometimes values:
+Affects text lines (no prefix), `-` list lines, and sometimes `:` attribute values:
 
-* Stopword removal in `>` lines (protected words preserved)
+* Stopword removal in text and `-` lines (protected words preserved)
 * Phrase map replacements
 * Unit normalization (`requests per minute` → `/m`, `1000 requests per minute` → `1000/m` when pattern matches)
+* Trailing period stripping: remove final `.` from text and `-` lines (but not `...`, `e.g.`, `i.e.`, `etc.`)
 * Boolean/enum value compression: columns where all values are boolean-like (`Yes/No`, `true/false`, `enabled/disabled`) map to compact forms (`Y/N`, `T/F`)
-* Sentence splitting (optional): 1 sentence → 1 `>` line if it decreases tokens
+* Sentence splitting (optional): 1 sentence → 1 text line if it decreases tokens
+
+**Identifying text lines:** A line is a text line if it does NOT start with any known prefix (`@`, `:`, `-`, `~`, `::`, `<<<`, `>>>`, `→`, `←`, `=`).
 
 **Conservative rule:** never remove `no/not/never/must/should/may` and never remove punctuation that flips meaning (like `?` for uncertainty if you use it).
 
@@ -260,13 +268,16 @@ The compiler MUST:
   "min_prefix_len": 6,
   "min_prefix_pct": 0.6,
   "bool_compress": true,
-  "stopwords": ["the","a","an","really","just","that"],
+  "stopwords": ["the","a","an","really","just","that","is","are","was","were","of","in","on","at","for","with","by","from","to"],
   "protect_words": ["no","not","never","must","should","may"],
   "phrase_map": {
     "in order to": "to",
     "as well as": "|",
     "due to": "because",
-    "is able to": "can"
+    "is able to": "can",
+    "is used to": "",
+    "is responsible for": "handles",
+    "refers to": "="
   },
   "units": {
     "requests per minute": "/m",
@@ -295,11 +306,11 @@ If no heading appears before content:
 At c2+:
 
 * optionally split sentences if it reduces tokens
-* otherwise keep as a single `>` line
+* otherwise keep as a single text line
 
-## Tables that don’t parse
+## Tables that don't parse
 
-Fallback to `>` line per row.
+Fallback to plain text line per row.
 
 ## HTML + weird markdown
 
@@ -311,29 +322,7 @@ Always preserved exactly (or minified only if explicitly enabled for json/yaml a
 
 ---
 
-# Suggested Implementation Plan
-
-### Phase 1 (MVP)
-
-* headings, paragraphs, lists, code fences
-* c0–c2
-* `@root` fallback
-* deterministic normalization
-
-### Phase 2
-
-* key:value extraction → `:k=v`
-* table parsing (pipe tables)
-
-### Phase 3
-
-* anchor support
-* unit normalization patterns
-* sentence splitting heuristics
-
----
-
-# Minimal IR → LLMD example (how the compiler “thinks”)
+# Minimal IR → LLMD example (how the compiler "thinks")
 
 Markdown:
 
@@ -357,7 +346,8 @@ LLMD (c2):
 
 ```
 @auth
-:methods=oauth2|apikey rate=1000/m
->oauth2 user apps
->apikey svc-svc
+:rate_limit=1000/m
+API supports OAuth2 API keys
+-OAuth2 user apps
+-API keys server-to-server
 ```

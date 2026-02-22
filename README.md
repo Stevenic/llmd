@@ -38,12 +38,12 @@ Rate limit: 1000 requests per minute.
 ```
 @auth
 :rate_limit=1000/m
->API supports authentication via OAuth2 API keys.
->OAuth2 user-facing apps.
->API keys server-to-server.
+API supports authentication via OAuth2 API keys
+-OAuth2 user-facing apps
+-API keys server-to-server
 ```
 
-Every line starts with a type prefix: `@` scope, `:` attribute, `>` content, `::` code block, `->` relation.
+Every line starts with a type prefix: `@` scope, `:` attribute, `-` list item, `→` relation, `::` code block — or is plain text (no prefix) for prose.
 
 ---
 
@@ -73,8 +73,8 @@ llmd/
 ├── README.md                                      # This file
 ├── LICENSE                                        # MIT
 │
-├── LLMD Specification - v0.1.md                   # Format spec (line types, scoping, normalization)
-├── LLMD Compiler Design v0.1.md                   # 6-stage pipeline spec
+├── LLMD Specification - v0.2.md                   # Format spec (line types, scoping, normalization)
+├── LLMD Compiler Design v0.2.md                   # 6-stage pipeline spec
 │
 ├── .architecture/
 │   └── ARCHITECTURE.md                            # System overview and diagrams
@@ -136,7 +136,7 @@ Run `pwsh tools/bench.ps1` or `bash tools/bench.sh` to reproduce.
 ## Key Features
 
 - **Hyphen-preserving key normalization** — CSS class names like `flm-button--primary` survive compilation intact
-- **Table classification** — 2-column property tables emit `:k=v`, 3+ column tables with identifier keys emit `:key=v1|v2`, others emit `>` rows with `:_cols=` headers
+- **Table classification** — 2-column property tables emit `:k=v`, 3+ column tables with identifier keys emit `:key=v1|v2`, others emit plain text rows with `:_cols=` headers
 - **Common prefix extraction** — When keys share a prefix (e.g., `flm-text--`), it's factored out as `:_pfx=` to avoid repetition
 - **Chunked KV emission** — Large attribute groups split across multiple lines (`max_kv_per_line`, default 4)
 - **Boolean compression** — Columns of `Yes/No`, `true/false`, `enabled/disabled` → `Y/N`, `T/F`
@@ -196,10 +196,42 @@ The agent can execute the shell commands, read the output, and summarize results
 
 ---
 
+## LLMD Reading Guide (for LLM System Prompts)
+
+When embedding `.llmd` content in a system prompt or tool context, include the following instructions so the model can interpret the format correctly:
+
+```
+Content below may include LLMD (LLM Document) format — a compressed, token-optimized
+representation of structured information. Read it as follows:
+
+- @name — scope declaration. Sets the current topic. All lines that follow belong to
+  this scope until the next @.
+- :k=v k2=v2 — attributes. Structured key-value facts about the current scope. |
+  separates multiple values (e.g., methods=oauth2|apikey). Units are shorthand
+  (e.g., 1000/m = 1000 per minute).
+- plain text (no prefix) — paragraph or prose about the current scope. Stopwords may
+  be removed; infer natural phrasing. Trailing periods are stripped.
+- -item — list item. A fact or step about the current scope. Nested items use dots:
+  -. child, -.. grandchild.
+- →Node — relation. Current scope depends on or connects to Node. ←Node is the
+  reverse. =Node means equivalence. A trailing ? means the relation is optional or
+  uncertain (e.g., →Cache?).
+- ::type followed by <<<...>>> — literal block. Preserved content (code, JSON, etc.)
+  not subject to compression.
+- ~k=v — file metadata. Appears at the top; includes version and compression level.
+- :_col=, :_cols=, :_pfx= — reserved meta-attributes. _col/_cols provide table column
+  headers; _pfx is a common prefix to prepend to subsequent keys.
+
+Hierarchy is flattened: @Auth under @API means these are separate scopes, not nested.
+Reconstruct context from scope names and surrounding lines.
+```
+
+---
+
 ## Specifications
 
 | Document | Description |
 |----------|-------------|
-| [LLMD Specification v0.1](LLMD%20Specification%20-%20v0.1.md) | Format definition: line types, scoping model, normalization rules, compression levels |
-| [Compiler Design v0.1](LLMD%20Compiler%20Design%20v0.1.md) | 6-stage pipeline architecture, table classification, prefix extraction, config reference |
+| [LLMD Specification v0.2](LLMD%20Specification%20-%20v0.2.md) | Format definition: line types, scoping model, normalization rules, compression levels |
+| [Compiler Design v0.2](LLMD%20Compiler%20Design%20v0.2.md) | 6-stage pipeline architecture, table classification, prefix extraction, config reference |
 | [Architecture](/.architecture/ARCHITECTURE.md) | System overview, component diagrams, file relationships |

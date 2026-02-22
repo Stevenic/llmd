@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ============================================================
 # llmdc — LLMD Compiler (Python)
-# Spec: LLMD v0.1 + Compiler Design v0.1
+# Spec: LLMD v0.2 + Compiler Design v0.2
 # ============================================================
 import argparse
 import json
@@ -135,6 +135,11 @@ def stage2(lines):
 
         if t == "":
             ir.append({"type": "blank"})
+            i += 1
+            continue
+
+        # Skip thematic breaks (---, ***, ___)
+        if re.match(r"^[-*_]{3,}$", t):
             i += 1
             continue
 
@@ -404,13 +409,13 @@ def emit_llmd(ir, blocks, config):
             for s in split_sentences(text):
                 s = s.strip()
                 if s:
-                    out.append(">" + s)
+                    out.append(s)
 
         elif node["type"] == "list_item":
             ensure_scope()
             text = process_text(node["text"])
-            prefix = "." * node["depth"]
-            out.append(">" + prefix + (" " if prefix else "") + text)
+            depth_dots = "." * node["depth"]
+            out.append("-" + depth_dots + (" " if depth_dots else "") + text)
 
         elif node["type"] == "kv":
             ensure_scope()
@@ -419,7 +424,7 @@ def emit_llmd(ir, blocks, config):
             if k:
                 kv_buffer.append({"key": k, "value": v})
             else:
-                out.append(">" + process_text(node["key"] + ": " + node["value"]))
+                out.append(process_text(node["key"] + ": " + node["value"]))
 
         elif node["type"] == "table":
             ensure_scope()
@@ -453,7 +458,7 @@ def emit_llmd(ir, blocks, config):
                     if k:
                         kv_buffer.append({"key": k, "value": v})
                     else:
-                        out.append(">" + process_text(r[0] + "|" + r[1]))
+                        out.append(process_text(r[0] + "|" + r[1]))
             elif table_type == "keyed_multi":
                 # Emit column headers
                 col_headers = "|".join(norm_key(h) for h in rows[0])
@@ -465,15 +470,15 @@ def emit_llmd(ir, blocks, config):
                         kv_buffer.append({"key": k, "value": "|".join(vals)})
                     else:
                         cells = [process_cell(c, ci) for ci, c in enumerate(r)]
-                        out.append(">" + "|".join(cells))
+                        out.append("|".join(cells))
             else:
-                # Raw: emit column headers then >c1|c2|c3
+                # Raw: emit column headers then c1|c2|c3
                 if len(rows[0]) >= 2:
                     col_headers = "|".join(norm_key(h) for h in rows[0])
                     out.append(":_cols=" + col_headers)
                 for r in rows[1:]:
                     cells = [process_cell(c, ci) for ci, c in enumerate(r)]
-                    out.append(">" + "|".join(cells))
+                    out.append("|".join(cells))
 
         elif node["type"] == "block_ref":
             ensure_scope()
@@ -495,8 +500,12 @@ def compress_c0(lines):
     out = []
     for line in lines:
         t = re.sub(r"\s+", " ", line).strip()
-        if t:
-            out.append(t)
+        if not t:
+            continue
+        # Strip any residual horizontal rules
+        if re.match(r"^[-*_]{3,}$", t) or t == ">---":
+            continue
+        out.append(t)
     return out
 
 
@@ -506,6 +515,16 @@ def compress_c1(lines):
 
 def _escape_regex(s):
     return re.escape(s)
+
+
+def _is_text_line(line):
+    """A line is a text line if it does not start with any known prefix."""
+    if not line:
+        return False
+    for prefix in ("@", ":", "-", "~", "::", "<<<", ">>>", "\u2192", "\u2190", "="):
+        if line.startswith(prefix):
+            return False
+    return True
 
 
 def compress_c2(lines, config):
@@ -539,31 +558,46 @@ def compress_c2(lines, config):
 
         text = line
 
-        # Apply phrase map and units on > and : lines
-        if text.startswith(">") or text.startswith(":"):
-            prefix = text[0]
+        # Determine line type
+        is_text = _is_text_line(text)
+        is_list = text.startswith("-")
+        is_attr = text.startswith(":")
+
+        if is_text:
+            line_prefix = ""
+            body = text
+        elif is_list:
+            line_prefix = "-"
             body = text[1:]
-
-            for phrase in phrases_sorted:
-                body = re.sub(_escape_regex(phrase), phrase_map[phrase], body, flags=re.IGNORECASE)
-
-            for unit in units_sorted:
-                # "N unit" pattern
-                body = re.sub(
-                    r"(\d+)\s+" + _escape_regex(unit),
-                    r"\1" + units[unit],
-                    body,
-                    flags=re.IGNORECASE,
-                )
-                # Standalone
-                body = re.sub(_escape_regex(unit), units[unit], body, flags=re.IGNORECASE)
-
-            text = prefix + body
-
-        # Stopword removal on > lines
-        if text.startswith(">"):
+        elif is_attr:
+            line_prefix = ":"
             body = text[1:]
-            tokens = body.split()
+        else:
+            out.append(text)
+            continue
+
+        # Apply phrase map on text, list, and attribute lines
+        for phrase in phrases_sorted:
+            body = re.sub(_escape_regex(phrase), phrase_map[phrase], body, flags=re.IGNORECASE)
+
+        for unit in units_sorted:
+            # "N unit" pattern
+            body = re.sub(
+                r"(\d+)\s+" + _escape_regex(unit),
+                r"\1" + units[unit],
+                body,
+                flags=re.IGNORECASE,
+            )
+            # Standalone
+            body = re.sub(_escape_regex(unit), units[unit], body, flags=re.IGNORECASE)
+
+        text = line_prefix + body
+
+        # Stopword removal on text and list lines
+        if is_text or is_list:
+            prefix2 = "-" if is_list else ""
+            body2 = text[1:] if is_list else text
+            tokens = body2.split()
             filtered = []
             for t in tokens:
                 low = re.sub(r"[^a-z]", "", t.lower())
@@ -575,7 +609,12 @@ def compress_c2(lines, config):
                     continue
                 if low not in stopwords:
                     filtered.append(t)
-            text = ">" + " ".join(filtered)
+            text = prefix2 + " ".join(filtered)
+
+        # Trailing period stripping on text and list lines
+        if is_text or is_list:
+            if text.endswith(".") and not text.endswith("...") and not text.endswith("e.g.") and not text.endswith("i.e.") and not text.endswith("etc."):
+                text = text[:-1]
 
         out.append(text)
 
@@ -607,7 +646,7 @@ def stage6(lines, config):
             continue
         if line.startswith("~"):
             continue
-        if not first_scope and (line.startswith(":") or line.startswith(">") or line.startswith("->")):
+        if not first_scope and (line.startswith(":") or line.startswith("-") or line.startswith("\u2192") or line.startswith("\u2190") or line.startswith("=") or _is_text_line(line)):
             errors.append(f"line {i + 1}: scoped line before first @scope")
 
     if errors:

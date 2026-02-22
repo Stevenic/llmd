@@ -4,14 +4,36 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 static RE_MULTI_SPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+static RE_THEMATIC_BREAK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[-*_]{3,}$").unwrap());
+
+fn is_text_line(line: &str) -> bool {
+    if line.is_empty() {
+        return false;
+    }
+    !line.starts_with('@')
+        && !line.starts_with(':')
+        && !line.starts_with('-')
+        && !line.starts_with('~')
+        && !line.starts_with("::")
+        && !line.starts_with("<<<")
+        && !line.starts_with(">>>")
+        && !line.starts_with('\u{2192}')
+        && !line.starts_with('\u{2190}')
+        && !line.starts_with('=')
+}
 
 pub fn compress_c0(lines: &[String]) -> Vec<String> {
     let mut out = Vec::new();
     for line in lines {
         let t = RE_MULTI_SPACE.replace_all(line, " ").trim().to_string();
-        if !t.is_empty() {
-            out.push(t);
+        if t.is_empty() {
+            continue;
         }
+        // Strip any residual horizontal rules
+        if RE_THEMATIC_BREAK.is_match(&t) || t == ">---" {
+            continue;
+        }
+        out.push(t);
     }
     out
 }
@@ -80,32 +102,41 @@ pub fn compress_c2(lines: &[String], config: &Config) -> Vec<String> {
 
             let mut text = line.clone();
 
-            // Apply phrase map and units on > and : lines
-            if text.starts_with('>') || text.starts_with(':') {
-                let prefix = &text[..1];
-                let mut body = text[1..].to_string();
+            // Determine line type
+            let is_text = is_text_line(&text);
+            let is_list = text.starts_with('-');
+            let is_attr = text.starts_with(':');
 
-                for (re, replacement) in &phrase_regexes {
-                    body = re.replace_all(&body, *replacement).to_string();
-                }
+            let (line_prefix, mut body) = if is_text {
+                ("", text.clone())
+            } else if is_list {
+                ("-", text[1..].to_string())
+            } else if is_attr {
+                (":", text[1..].to_string())
+            } else {
+                return text;
+            };
 
-                for (re_num, re_standalone, unit_val) in &unit_regexes {
-                    // "N unit" pattern
-                    let replacement = format!("${{1}}{}", unit_val);
-                    body = re_num.replace_all(&body, replacement.as_str()).to_string();
-                    // Standalone
-                    body = re_standalone
-                        .replace_all(&body, *unit_val)
-                        .to_string();
-                }
-
-                text = format!("{}{}", prefix, body);
+            // Apply phrase map on text, list, and attribute lines
+            for (re, replacement) in &phrase_regexes {
+                body = re.replace_all(&body, *replacement).to_string();
             }
 
-            // Stopword removal on > lines only
-            if text.starts_with('>') {
-                let body = &text[1..];
-                let tokens: Vec<&str> = body.split_whitespace().collect();
+            for (re_num, re_standalone, unit_val) in &unit_regexes {
+                let replacement = format!("${{1}}{}", unit_val);
+                body = re_num.replace_all(&body, replacement.as_str()).to_string();
+                body = re_standalone
+                    .replace_all(&body, *unit_val)
+                    .to_string();
+            }
+
+            text = format!("{}{}", line_prefix, body);
+
+            // Stopword removal on text and list lines
+            if is_text || is_list {
+                let prefix2 = if is_list { "-" } else { "" };
+                let body2 = if is_list { &text[1..] } else { &text[..] };
+                let tokens: Vec<&str> = body2.split_whitespace().collect();
                 let filtered: Vec<&str> = tokens
                     .into_iter()
                     .filter(|t| {
@@ -123,7 +154,19 @@ pub fn compress_c2(lines: &[String], config: &Config) -> Vec<String> {
                         !stopwords.contains(&low)
                     })
                     .collect();
-                text = format!(">{}", filtered.join(" "));
+                text = format!("{}{}", prefix2, filtered.join(" "));
+            }
+
+            // Trailing period stripping on text and list lines
+            if is_text || is_list {
+                if text.ends_with('.')
+                    && !text.ends_with("...")
+                    && !text.ends_with("e.g.")
+                    && !text.ends_with("i.e.")
+                    && !text.ends_with("etc.")
+                {
+                    text.pop();
+                }
             }
 
             text
@@ -146,9 +189,18 @@ mod tests {
     fn test_stopword_removal() {
         let mut config = Config::default();
         config.stopwords = vec!["the".to_string(), "a".to_string()];
-        let lines = vec![">the big a dog".to_string()];
+        let lines = vec!["-the big a dog".to_string()];
         let result = compress_c2(&lines, &config);
-        assert_eq!(result, vec![">big dog"]);
+        assert_eq!(result, vec!["-big dog"]);
+    }
+
+    #[test]
+    fn test_stopword_removal_text_line() {
+        let mut config = Config::default();
+        config.stopwords = vec!["the".to_string(), "a".to_string()];
+        let lines = vec!["the big a dog".to_string()];
+        let result = compress_c2(&lines, &config);
+        assert_eq!(result, vec!["big dog"]);
     }
 
     #[test]
@@ -156,9 +208,9 @@ mod tests {
         let mut config = Config::default();
         config.stopwords = vec!["not".to_string()];
         config.protect_words = vec!["not".to_string()];
-        let lines = vec![">do not delete".to_string()];
+        let lines = vec!["-do not delete".to_string()];
         let result = compress_c2(&lines, &config);
-        assert_eq!(result, vec![">do not delete"]);
+        assert_eq!(result, vec!["-do not delete"]);
     }
 
     #[test]
@@ -167,9 +219,26 @@ mod tests {
         config
             .phrase_map
             .insert("in order to".to_string(), "to".to_string());
-        let lines = vec![">do this in order to achieve".to_string()];
+        let lines = vec!["-do this in order to achieve".to_string()];
         let result = compress_c2(&lines, &config);
-        assert_eq!(result, vec![">do this to achieve"]);
+        assert_eq!(result, vec!["-do this to achieve"]);
+    }
+
+    #[test]
+    fn test_trailing_period_stripping() {
+        let config = Config::default();
+        let lines = vec!["some text here.".to_string(), "-list item.".to_string()];
+        let result = compress_c2(&lines, &config);
+        assert_eq!(result[0], "some text here");
+        assert_eq!(result[1], "-list item");
+    }
+
+    #[test]
+    fn test_trailing_period_preserves_ellipsis() {
+        let config = Config::default();
+        let lines = vec!["some text...".to_string()];
+        let result = compress_c2(&lines, &config);
+        assert_eq!(result[0], "some text...");
     }
 
     #[test]

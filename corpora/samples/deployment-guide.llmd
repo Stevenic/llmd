@@ -1,0 +1,137 @@
+@deployment_guide_for_acme_platform
+document describes how deploy, configure, operate Acme Platform production environments. covers infrastructure requirements, deployment pipeline, configuration management, monitoring, incident response procedures
+@infrastructure_requirements
+@compute
+platform requires minimum three application nodes behind load balancer. node should least 4 vCPUs 16 GB RAM. high-traffic deployments exceeding 10,000/s, increase 8 vCPUs 32 GB RAM per node
+-Application nodes: 3 minimum, 6 recommended high availability
+-Load balancer: Layer 7 health check support
+-Worker nodes: 2 minimum background job processing
+-Scheduler node: 1 dedicated instance cron periodic tasks
+@storage
+persistent data stored PostgreSQL. File uploads go S3-compatible object storage
+-PostgreSQL 15 later streaming replication enabled
+-Primary database: 500 GB SSD minimum
+-Read replicas: 2 minimum production workloads
+-Object storage: S3 compatible (MinIO, GCS S3 gateway)
+-Redis 7 later caching session storage
+-Redis memory: 8 GB minimum, 16 GB recommended
+@networking
+-Private subnet application database nodes
+-Public subnet only load balancer bastion host
+-VPN private link cross-region replication
+-DNS: Route 53 equivalent health-check-based failover
+-TLS 1.3 required external endpoints
+-Internal traffic uses mTLS services
+@deployment_pipeline
+@overview
+platform uses continuous deployment pipeline runs merge main branch. pipeline builds container image, runs test suite, performs canary deployment, then promotes full rollout
+@steps_to_deploy_a_new_release
+-Open pull request against main branch your changes
+-CI system runs full test suite including unit tests, integration tests, end-to-end tests
+-reviewer approves pull request merged main
+-pipeline builds new Docker image tagged commit SHA
+-image pushed container registry scanned vulnerabilities
+-If scan passes, pipeline deploys new image canary node receives 5% traffic
+-canary runs 10min while automated checks monitor error rates, latency, resource usage
+-If health checks pass canary window, pipeline promotes image remaining nodes using rolling update strategy
+-node drained active connections before new image started
+-After nodes updated, pipeline runs smoke test suite against production endpoint
+-If smoke tests pass, deployment marked as successful commit SHA recorded as current release
+-If step fails, pipeline automatically rolls back previous known-good image
+@rollback_procedure
+failed deployment post-deployment incident, rollback can triggered manually automatically
+-Automatic rollback triggers if error rate exceeds 5% canary first 15min after full rollout
+-Manual rollback performed running acme deploy rollback <commit-sha> operations CLI
+-Rollback completes under 3min typical 6-node cluster
+-Database migrations designed backward-compatible so rollbacks do not require schema changes
+@configuration_management
+@environment_variables
+runtime configuration provided environment variables. No configuration files baked container image
+:_cols=variable|required|default|description
+:database_url=Y|—|PostgreSQL connection string redis_url=Y|—|Redis connection string s3_bucket=Y|—|Object storage bucket name s3_region=Y|—|Object storage region
+:secret_key=Y|—|Application secret for signing tokens log_level=N|info|Logging verbosity: debug, info, warn, error worker_concurrency=N|4|Number of concurrent background workers max_upload_size_mb=N|50|Maximum file upload size in MB
+:rate_limit_per_min=N|600|API rate limit per authenticated user enable_feature_flags=N|false|Enable the feature flag evaluation system
+@secrets_management
+Secrets stored AWS Secrets Manager HashiCorp Vault. injected container startup never written disk
+-Database credentials rotate 30 days automatically
+-API signing keys use RSA 4096-bit keys
+-TLS certificates managed cert-manager automatic renewal
+-Service account tokens expire after 24 hours refreshed automatically
+@feature_flags
+platform supports feature flags gradual rollouts A/B testing
+-Flags defined admin dashboard under Settings > Feature Flags
+-flag name, description, targeting rules
+-Targeting can based user ID, organization, geographic region, percentage rollout
+-Flag evaluation cached Redis 30-second TTL
+-Disabled flags return default value zero latency overhead
+@monitoring_and_observability
+@metrics
+platform exports Prometheus-compatible metrics port 9090 /metrics endpoint
+-http_requests_total — Total HTTP requests method, path, status code
+-http_request_duration_s — Request latency histogram p50, p95, p99 buckets
+-db_query_duration_s — Database query latency query type
+-db_connections_active — Current number active database connections
+-cache_hit_ratio — Redis cache hit rate
+-worker_jobs_processed_total — Background jobs completed queue name
+-worker_jobs_failed_total — Failed background jobs queue error type
+-s3_upload_duration_s — Object storage upload latency
+-feature_flag_evaluations_total — Flag evaluations flag name result
+@logging
+application logs structured JSON written stdout. container runtime collects forwards centralized logging system
+-Log format: JSON fields timestamp, level, message, request_id, user_id, trace_id
+-Log aggregation: Elasticsearch Loki
+-Retention: 30 days info above, 7 days debug
+-Sensitive fields like passwords tokens automatically redacted before logging
+@alerting
+Alerts configured Grafana delivered PagerDuty critical issues Slack warnings
+:_cols=alert|condition|severity|response_time
+:high_error_rate=Error rate > 5% for 5min|Critical|5min high_latency=p99 latency > 2s for 10min|Warning|30min database_connection_pool_exhaustion=Active connections > 90% of pool size|Critical|5min disk_usage_high=Disk usage > 85% on any node|Warning|1 hour
+:certificate_expiry=TLS cert expires within 7 days|Warning|24 hours failed_deployments=Two consecutive deployment failures|Critical|15min worker_queue_backlog=Queue depth > 10,000 for 15min|Warning|30min
+@distributed_tracing
+platform uses OpenTelemetry distributed tracing across services
+-Traces propagate via W3C Trace Context header
+-Sampling rate 10% normal traffic 100% error responses
+-Trace data exported Jaeger 48-hour retention window
+-trace includes spans HTTP handlers, database queries, cache operations, external API calls
+@incident_response
+@severity_levels
+-SEV-1: Complete service outage data loss affecting users. Requires immediate response on-call engineer incident commander
+-SEV-2: Degraded service affecting significant portion users. Feature unusable but workarounds exist. Response within 15min
+-SEV-3: Minor issue limited user impact. single feature partially broken. Response within 1 hour
+-SEV-4: Cosmetic low-priority issue. No user impact core functionality. Addressed normal business hours
+@incident_response_steps
+-on-call engineer acknowledges alert within defined response time severity level
+-Assess scope incident checking dashboards, logs, recent deployments
+-If incident correlates recent deployment, initiate rollback immediately
+-Open incident channel Slack page additional responders if issue SEV-1 SEV-2
+-Communicate current status stakeholders status page
+-Identify root cause using traces, logs, metrics
+-Apply fix mitigation verify service recovered
+-Monitor recurrence least 30min after fix
+-Write post-incident review within 48 hours documenting timeline, root cause, impact, corrective actions
+-Track corrective actions as tickets assign owners due dates
+@communication
+active incident, communication follows structured cadence
+-SEV-1: Status page updated 15min. Stakeholder email start resolution
+-SEV-2: Status page updated 30min
+-SEV-3 SEV-4: No external communication required
+-incidents summarized weekly operations report
+@maintenance_windows
+Regular maintenance performed low-traffic windows minimize user impact
+-Database maintenance: Sundays 02:00–04:00 UTC. Includes vacuum, reindex, minor version upgrades
+-Infrastructure patching: First Tuesday month, 03:00–05:00 UTC. OS runtime updates across nodes
+-Certificate rotation: Automated, no maintenance window required
+-Dependency updates: Reviewed weekly, deployed normal pipeline
+@pre-maintenance_checklist
+-Notify stakeholders least 48 hours advance planned downtime
+-Verify backups completed successfully within last 24 hours
+-Confirm rollback procedure tested documented
+-Ensure on-call coverage scheduled maintenance window
+-Stage maintenance changes staging environment first
+-Prepare communication template status page
+@post-maintenance_verification
+-Run full smoke test suite against production endpoint
+-Check monitoring dashboards anomalies
+-Verify database replication lag within acceptable limits
+-Confirm background worker queues processing normally
+-Send all-clear notification stakeholders
