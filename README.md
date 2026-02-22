@@ -110,6 +110,17 @@ llmd/
 
 Full reference docs: [`docs/`](docs/)
 
+### Performance
+
+All three implementations produce identical output. Measured on Windows 11 (median of 5 runs, c2 compression):
+
+| File | JS (Node 22) | Python 3.10 | Rust (release) |
+|------|-------------|-------------|----------------|
+| api-spec.md (1.3 KB) | 140 ms | 238 ms | 61 ms |
+| fluentlm-components.md (45 KB) | 243 ms | 354 ms | 73 ms |
+
+Run `pwsh tools/bench.ps1` or `bash tools/bench.sh` to reproduce.
+
 ---
 
 ## Compression Levels
