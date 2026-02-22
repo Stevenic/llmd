@@ -104,8 +104,10 @@ llmd/
 ├── tools/
 │   ├── js/                            # Node.js implementations
 │   │   └── llmdc.js                   # Compiler
-│   └── py/                            # Python implementations
-│       └── llmdc.py                   # Compiler
+│   ├── py/                            # Python implementations
+│   │   └── llmdc.py                   # Compiler
+│   └── rust/                          # Rust implementation
+│       └── src/                       # Compiler (single binary)
 │
 └── corpora/
     └── samples/                       # Sample documents for testing
@@ -202,6 +204,6 @@ Rate limit: 1000 requests per minute.
 
 ---
 
-## Dual Implementation Strategy
+## Triple Implementation Strategy
 
-The compiler is implemented in both JavaScript (Node.js 18+) and Python (3.10+) for portability. No external dependencies required.
+The compiler is implemented in JavaScript (Node.js 18+), Python (3.10+), and Rust (1.80+). All three produce byte-identical output for the same input and config. The JS and Python implementations require no external dependencies. The Rust implementation compiles to a single static binary with no runtime dependencies.

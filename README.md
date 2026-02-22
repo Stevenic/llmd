@@ -86,8 +86,10 @@ llmd/
 ├── tools/
 │   ├── js/                                        # Node.js implementations
 │   │   └── llmdc.js                               # Compiler
-│   └── py/                                        # Python implementations
-│       └── llmdc.py                               # Compiler
+│   ├── py/                                        # Python implementations
+│   │   └── llmdc.py                               # Compiler
+│   └── rust/                                      # Rust implementation
+│       └── src/                                   # Compiler (single binary)
 │
 └── corpora/
     └── samples/                                   # Sample documents for testing
@@ -99,9 +101,9 @@ llmd/
 
 ## Tools
 
-| Tool | JS | Python | Purpose |
-|------|-----|--------|---------|
-| **llmdc** | `tools/js/llmdc.js` | `tools/py/llmdc.py` | Compile Markdown → LLMD |
+| Tool | JS | Python | Rust | Purpose |
+|------|-----|--------|------|---------|
+| **llmdc** | `tools/js/llmdc.js` | `tools/py/llmdc.py` | `tools/rust/` | Compile Markdown → LLMD |
 
 Full reference docs: [`docs/`](docs/)
 
