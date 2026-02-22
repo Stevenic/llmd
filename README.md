@@ -36,11 +36,11 @@ Rate limit: 1000 requests per minute.
 
 **LLMD output (c2):**
 ```
- @authentication
-  >The API supports authentication via OAuth2 and API keys.
-  >Use OAuth2 for user-facing apps.
-  >Use API keys for server-to-server.
-  :rate_limit=1000 requests per minute.
+@authentication
+The API supports authentication via OAuth2 and API keys
+-Use OAuth2 for user-facing apps
+-Use API keys for server-to-server
+:rate_limit=1000 requests per minute.
 ```
 
 Every line starts with a type prefix: `@` scope, `:` attribute, `-` list item, `→` relation, `::` code block — or is plain text (no prefix) for prose.
@@ -201,29 +201,44 @@ The agent can execute the shell commands, read the output, and summarize results
 When embedding `.llmd` content in a system prompt or tool context, include the following instructions so the model can interpret the format correctly:
 
 ```
-Content below may include LLMD (LLM Document) format — a compressed, token-optimized
-representation of structured information. Read it as follows:
+Content below is LLMD v0.2 — a compressed, token-optimized format. Read it as follows:
 
-- @name — scope declaration. Sets the current topic. All lines that follow belong to
-  this scope until the next @.
-- :k=v k2=v2 — attributes. Structured key-value facts about the current scope. |
-  separates multiple values (e.g., methods=oauth2|apikey). Units are shorthand
-  (e.g., 1000/m = 1000 per minute).
-- plain text (no prefix) — paragraph or prose about the current scope. Stopwords may
-  be removed; infer natural phrasing. Trailing periods are stripped.
-- -item — list item. A fact or step about the current scope. Nested items use dots:
-  -. child, -.. grandchild.
-- →Node — relation. Current scope depends on or connects to Node. ←Node is the
-  reverse. =Node means equivalence. A trailing ? means the relation is optional or
-  uncertain (e.g., →Cache?).
-- ::type followed by <<<...>>> — literal block. Preserved content (code, JSON, etc.)
-  not subject to compression.
-- ~k=v — file metadata. Appears at the top; includes version and compression level.
-- :_col=, :_cols=, :_pfx= — reserved meta-attributes. _col/_cols provide table column
-  headers; _pfx is a common prefix to prepend to subsequent keys.
+Line types (each non-empty line starts with exactly one prefix, or none for prose):
 
-Hierarchy is flattened: @Auth under @API means these are separate scopes, not nested.
-Reconstruct context from scope names and surrounding lines.
+- @name — scope. Sets the current topic. All following lines belong to this scope
+  until the next @. Hierarchy is flattened: @Auth after @API means separate scopes,
+  not nested. Reconstruct context from scope names.
+- :k=v k2=v2 — attributes. Key-value facts about the current scope. | separates
+  multiple values (e.g., methods=oauth2|apikey). Multiple pairs may appear on one
+  line, space-separated.
+- plain text (no prefix) — prose about the current scope.
+- -item — list item. Nested depth uses dots: -. child, -.. grandchild.
+- →Node — relation. Current scope depends on Node. ←Node is reverse. =Node is
+  equivalence. Trailing ? means optional (e.g., →Cache?).
+- ::lang followed by <<<...>>> — literal block. Code or data preserved exactly,
+  not compressed.
+- ~k=v — file metadata. Optional, appears at top of file.
+
+Reserved meta-attributes (compiler-generated, prefixed with _):
+
+- :_col=<header> — column header for a 2-column property table.
+- :_cols=c1|c2|c3 — column headers for a multi-column table.
+- :_pfx=<prefix> — common prefix extracted from subsequent keys. Prepend it to
+  restore full key names (e.g., :_pfx=flm-text-- then :secondary=... means the
+  full key is flm-text--secondary).
+
+Compression artifacts (content may be shortened — infer original phrasing):
+
+- Common words (the, a, is, are, of, etc.) may be removed from prose and list items.
+- Long phrases replaced with short forms (e.g., "in order to" → "to",
+  "application programming interface" → "API", "specification" → "spec").
+- Units shortened (e.g., "1000 requests per minute" → "1000/m",
+  "seconds" → "s", "megabytes" → "MB").
+- Boolean values compressed (Yes/No → Y/N, true/false → T/F,
+  enabled/disabled → Y/N).
+- Trailing periods stripped from prose and list items.
+- Negation (no, not, never) and modals (must, should, may, always) are always
+  preserved.
 ```
 
 ---

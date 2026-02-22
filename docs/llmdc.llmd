@@ -81,5 +81,5 @@ Validation (no scoped lines before first @), optional scope anchors
 @output_c2
 ::code
 <<<
-@text_styles :_cols=class|effect >flm-text--secondary|Color: --bodySubtext >flm-text--disabled|Color: --disabledText >flm-text--error|Color: --errorText
+@text_styles :_col=effect :_pfx=flm-text-- :secondary=Color: --bodySubtext disabled=Color: --disabledText error=Color: --errorText
 >>>
