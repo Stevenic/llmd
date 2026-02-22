@@ -9,14 +9,17 @@ LLMD is a deterministic compiler system that converts Markdown into a compact, t
 ## Quick Start
 
 ```bash
-# Compile a Markdown file at compression level 2
+# JavaScript (Node.js 18+)
 node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd
 
-# Compile an entire directory
-node tools/js/llmdc.js corpora/samples/ -c 2 -o output.llmd
+# Python (3.10+)
+python tools/py/llmdc.py docs/llmdc.md -c 2 -o docs/llmdc.llmd
+
+# Rust (single binary, no runtime needed)
+cargo run --manifest-path tools/rust/Cargo.toml -- docs/llmdc.md -c 2 -o docs/llmdc.llmd
 ```
 
-Python equivalents are available in `tools/py/` (requires Python 3.10+, no dependencies).
+All three implementations produce identical output. Use whichever fits your environment.
 
 ---
 
@@ -86,8 +89,10 @@ llmd/
 ├── tools/
 │   ├── js/                                        # Node.js implementations
 │   │   └── llmdc.js                               # Compiler
-│   └── py/                                        # Python implementations
-│       └── llmdc.py                               # Compiler
+│   ├── py/                                        # Python implementations
+│   │   └── llmdc.py                               # Compiler
+│   └── rust/                                      # Rust implementation
+│       └── src/                                   # Compiler (single binary)
 │
 └── corpora/
     └── samples/                                   # Sample documents for testing
@@ -99,11 +104,22 @@ llmd/
 
 ## Tools
 
-| Tool | JS | Python | Purpose |
-|------|-----|--------|---------|
-| **llmdc** | `tools/js/llmdc.js` | `tools/py/llmdc.py` | Compile Markdown → LLMD |
+| Tool | JS | Python | Rust | Purpose |
+|------|-----|--------|------|---------|
+| **llmdc** | `tools/js/llmdc.js` | `tools/py/llmdc.py` | `tools/rust/` | Compile Markdown → LLMD |
 
 Full reference docs: [`docs/`](docs/)
+
+### Performance
+
+All three implementations produce identical output. Measured on Windows 11 (median of 5 runs, c2 compression):
+
+| File | JS (Node 22) | Python 3.10 | Rust (release) |
+|------|-------------|-------------|----------------|
+| api-spec.md (1.3 KB) | 140 ms | 238 ms | 61 ms |
+| fluentlm-components.md (45 KB) | 243 ms | 354 ms | 73 ms |
+
+Run `pwsh tools/bench.ps1` or `bash tools/bench.sh` to reproduce.
 
 ---
 
