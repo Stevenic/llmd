@@ -9,14 +9,17 @@ LLMD is a deterministic compiler system that converts Markdown into a compact, t
 ## Quick Start
 
 ```bash
-# Compile a Markdown file at compression level 2
+# JavaScript (Node.js 18+)
 node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd
 
-# Compile an entire directory
-node tools/js/llmdc.js corpora/samples/ -c 2 -o output.llmd
+# Python (3.10+)
+python tools/py/llmdc.py docs/llmdc.md -c 2 -o docs/llmdc.llmd
+
+# Rust (single binary, no runtime needed)
+cargo run --manifest-path tools/rust/Cargo.toml -- docs/llmdc.md -c 2 -o docs/llmdc.llmd
 ```
 
-Python equivalents are available in `tools/py/` (requires Python 3.10+, no dependencies).
+All three implementations produce identical output. Use whichever fits your environment.
 
 ---
 
