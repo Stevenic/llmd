@@ -26,5 +26,8 @@ env/
 .DS_Store
 Thumbs.db
 
+# Rust
+tools/rust/target/
+
 # OS
 desktop.ini
