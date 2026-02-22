@@ -36,11 +36,11 @@ Rate limit: 1000 requests per minute.
 
 **LLMD output (c2):**
 ```
-@auth
-:rate_limit=1000/m
-API supports authentication via OAuth2 API keys
--OAuth2 user-facing apps
--API keys server-to-server
+ @authentication
+  >The API supports authentication via OAuth2 and API keys.
+  >Use OAuth2 for user-facing apps.
+  >Use API keys for server-to-server.
+  :rate_limit=1000 requests per minute.
 ```
 
 Every line starts with a type prefix: `@` scope, `:` attribute, `-` list item, `→` relation, `::` code block — or is plain text (no prefix) for prose.
