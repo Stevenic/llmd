@@ -2,7 +2,7 @@
 
 Compiles Markdown files into the LLMD token-optimized format through a 6-stage pipeline.
 
-Available as both `node tools/js/llmdc.js` and `python tools/py/llmdc.py`.
+Available as `node tools/js/llmdc.js`, `python tools/py/llmdc.py`, and `cargo run --bin llmdc`.
 
 ---
 
@@ -30,7 +30,7 @@ llmdc docs/ -c 2 -o out.llmd
 | `-c, --compression <0-2>` | Compression level | from config or `2` |
 | `--scope-mode <mode>` | `flat`, `concat`, or `stacked` | `flat` |
 | `--keep-urls` | Preserve URLs at c2+ | `false` |
-| `--sentence-split` | Split sentences into separate `>` lines at c2+ | `false` |
+| `--sentence-split` | Split sentences into separate text lines at c2+ | `false` |
 | `--anchor-every <n>` | Re-emit `@scope` every N lines | `0` (off) |
 | `--config <path>` | Config file path | auto-detect |
 | `-h, --help` | Show help | |
@@ -55,7 +55,7 @@ See [`config/llmdc.config.json`](../config/llmdc.config.json) for the full defau
 | `min_prefix_len` | int | `6` | Minimum prefix length to extract |
 | `min_prefix_pct` | float | `0.6` | Minimum % of keys sharing prefix |
 | `bool_compress` | bool | `true` | Compress boolean values at c2+ |
-| `stopwords` | string[] | see config | Words removed from `>` lines at c2+ |
+| `stopwords` | string[] | see config | Words removed from text/list lines at c2+ |
 | `protect_words` | string[] | see config | Words never removed |
 | `phrase_map` | object | see config | Phrase replacements at c2+ |
 | `units` | object | see config | Unit normalizations at c2+ |
@@ -80,13 +80,13 @@ Headings map to `@scope` declarations via `normScopeName()` (trim, spaces→`_`,
 Walk the IR and generate LLMD lines:
 
 - **Headings** → `@scope`
-- **Paragraphs** → `>text` (optionally sentence-split at c2+)
-- **Lists** → `>item` with `.` depth prefixes
+- **Paragraphs** → plain text (no prefix; optionally sentence-split at c2+)
+- **Lists** → `-item` with `.` depth prefixes
 - **KV lines** → `:key=value` (buffered, chunked by `max_kv_per_line`)
 - **Tables** → classified via `classifyTable()`:
   - **`property`** (2-col, unique identifier-like keys) → `:k=v` pairs, with optional `:_col=<header>`
-  - **`keyed_multi`** (3+ col, unique identifier-like keys) → `:_cols=h1|h2|h3` then `:key=v1|v2`
-  - **`raw`** (everything else) → `:_cols=h1|h2|h3` then `>c1|c2|c3`
+  - **`keyed_multi`** (3+ col, unique identifier-like keys) → `:_cols=h1¦h2¦h3` then `:key=v1¦v2`
+  - **`raw`** (everything else) → `:_cols=h1¦h2¦h3` then `c1¦c2¦c3` per row
 - **Code blocks** → `::lang` + `<<<` content `>>>`
 
 #### Key Normalization (`normKey`)
@@ -119,7 +119,7 @@ Validation (no scoped lines before first `@`), optional scope anchors.
 
 ## Output Format
 
-`.llmd` text file. See the [LLMD Specification](../LLMD%20Specification%20-%20v0.1.md) for line type reference.
+`.llmd` text file. See the [LLMD Specification](../LLMD%20Specification%20-%20v0.2.md) for line type reference.
 
 ---
 
@@ -138,8 +138,7 @@ Validation (no scoped lines before first `@`), optional scope anchors.
 ### Output (c2)
 ```
 @text_styles
-:_cols=class|effect
->flm-text--secondary|Color: --bodySubtext
->flm-text--disabled|Color: --disabledText
->flm-text--error|Color: --errorText
+:_col=effect
+:_pfx=flm-text--
+:secondary=Color: --bodySubtext disabled=Color: --disabledText error=Color: --errorText
 ```

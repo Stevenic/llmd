@@ -1,0 +1,458 @@
+@objects
+Required properties marked !
+AdaptiveCard:
+-properties: key, type!, id, requires, lang, isSortKey, selectAction, style, layouts, minHeight, backgroundImage, verticalContentAlignment, rtl, $schema, version, fallbackText, speak, refresh, authentication, msteams, msTeams, metadata, resources, references, grid.area, fallback, body, actions
+HostCapabilities:
+-properties: key
+Action.Execute:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, data, associatedInputs, conditionallyEnabled, verb, fallback
+Action.OpenUrl:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, url, fallback
+Action.ResetInputs:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, targetInputIds, fallback
+Action.RunCommands:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, commands, onFailure, fallback
+Action.Submit:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, data, associatedInputs, conditionallyEnabled, msteams, msTeams, fallback
+Action.ToggleVisibility:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, targetElements, fallback
+ThemedUrl:
+-properties: key, theme, url
+TargetElement:
+-properties: elementId, isVisible
+Action.ShowCard:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, menuActions, themedIconUrls, fallback, card
+Action.Popover:
+-properties: key, type!, id, requires, title, title.dynamic, iconUrl, style, mode, tooltip, tooltip.dynamic, isEnabled, isEnabled.dynamic, isVisible, isVisible.dynamic, themedIconUrls, content, displayArrow, position, maxPopoverWidth, popoverTitle, fallback
+Accordion:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, targetWidth, isSortKey, minHeight, allowCollapseAllPages, allowMultipleExpandedPages, grid.area, fallback, pages
+Container:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, layouts, bleed, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, grid.area, fallback, items
+Layout.Stack:
+-properties: key, type!, targetWidth
+Layout.Flow:
+-properties: key, type!, targetWidth, horizontalItemsAlignment, verticalItemsAlignment, itemFit, minItemWidth, maxItemWidth, itemWidth, columnSpacing, rowSpacing
+Layout.AreaGrid:
+-properties: key, type!, targetWidth, columns, areas, columnSpacing, rowSpacing
+GridArea:
+-properties: key, name, column, columnSpan, row, rowSpan
+BackgroundImage:
+-properties: key, url, fillMode, horizontalAlignment, verticalAlignment, themedUrls
+ActionSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, grid.area, fallback, actions
+ColumnSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, bleed, minHeight, minWidth, grid.area, fallback, columns
+Media:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, sources, captionSources, poster, altText, grid.area, fallback
+MediaSource:
+-properties: key, mimeType, url
+CaptionSource:
+-properties: key, mimeType, url, label
+RichTextBlock:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, labelFor, grid.area, fallback, inlines
+Table:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, style, showBorder, roundedCorners, columns, minWidth, firstRowAsHeaders, showGridLines, gridStyle, horizontalCellContentAlignment, verticalCellContentAlignment, grid.area, fallback, rows
+ColumnDefinition:
+-properties: key, horizontalCellContentAlignment, verticalCellContentAlignment, width
+TextBlock:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, text, text.dynamic, size, weight, color, isSubtle, fontType, wrap, maxLines, style, labelFor, grid.area, fallback
+FactSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, facts, grid.area, fallback
+Fact:
+-properties: key, title, value
+ImageSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, images, imageSize, grid.area, fallback
+Image:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, horizontalAlignment, spacing, targetWidth, isSortKey, url, altText, backgroundColor, style, size, width, selectAction, allowExpand, msteams, msTeams, themedUrls, fitMode, horizontalContentAlignment, verticalContentAlignment, height, grid.area, fallback
+TeamsImageProperties:
+-properties: key, allowExpand
+Input.Text:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, maxLength, isMultiline, placeholder, style, inlineAction, regex, grid.area, fallback
+Input.Date:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, placeholder, min, max, grid.area, fallback
+Input.Time:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, placeholder, min, max, grid.area, fallback
+Input.Number:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, placeholder, min, max, grid.area, fallback
+Input.Toggle:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, title, valueOn, valueOff, wrap, showTitle, grid.area, fallback
+Input.ChoiceSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, choices, choices.data, style, isMultiSelect, placeholder, wrap, useMultipleColumns, minColumnWidth, grid.area, fallback
+Choice:
+-properties: key, title, value
+Data.Query:
+-properties: key, type!, dataset, associatedInputs, count, skip
+Input.Rating:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, label, isRequired, errorMessage, valueChangedAction, value, max, allowHalfSteps, size, color, grid.area, fallback
+Rating:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, value, count, max, size, color, style, grid.area, fallback
+CompoundButton:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, icon, badge, title, description, selectAction, grid.area, fallback
+IconInfo:
+-properties: key, name, size, style, color
+Icon:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, horizontalAlignment, spacing, targetWidth, isSortKey, name, size, style, color, selectAction, grid.area, fallback
+Carousel:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, bleed, minHeight, pageAnimation, grid.area, fallback, pages
+TabSet:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, bleed, minHeight, size, grid.area, fallback, pages
+Badge:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, text, icon, iconPosition, appearance, size, shape, style, tooltip, grid.area, fallback
+ProgressRing:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, label, labelPosition, size, grid.area, fallback
+ProgressBar:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, value, max, color, grid.area, fallback
+LoopComponent:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, componentUrl, grid.area, fallback
+Chart.Donut:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, data, value, valueColor, thickness, showOutlines, grid.area, fallback
+DonutChartData:
+-properties: key, legend, value, color
+Chart.Pie:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, data, value, valueColor, thickness, showOutlines, grid.area, fallback
+Chart.VerticalBar.Grouped:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, xAxisTitle, yAxisTitle, color, stacked, data, showBarValues, yMin, yMax, grid.area, fallback
+GroupedVerticalBarChartData:
+-properties: key, legend, values, color
+BarChartDataValue:
+-properties: key, x, y
+Chart.VerticalBar:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, xAxisTitle, yAxisTitle, data, color, showBarValues, yMin, yMax, grid.area, fallback
+VerticalBarChartDataValue:
+-properties: key, x, y, color
+Chart.HorizontalBar:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, xAxisTitle, yAxisTitle, color, data, displayMode, grid.area, fallback
+HorizontalBarChartDataValue:
+-properties: key, x, y, color
+Chart.HorizontalBar.Stacked:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, xAxisTitle, yAxisTitle, color, data, grid.area, fallback
+StackedHorizontalBarChartData:
+-properties: key, title, data
+StackedHorizontalBarChartDataPoint:
+-properties: key, legend, value, color
+Chart.Line:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, xAxisTitle, yAxisTitle, color, data, yMin, yMax, grid.area, fallback
+LineChartData:
+-properties: key, legend, values, color
+LineChartValue:
+-properties: key, x, y
+Chart.Gauge:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, title, showTitle, colorSet, maxWidth, showLegend, min, max, subLabel, showMinMax, showNeedle, showOutlines, segments, value, valueFormat, grid.area, fallback
+GaugeChartLegend:
+-properties: key, size, legend, color
+CodeBlock:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, codeSnippet, language, startLineNumber, grid.area, fallback
+Component.graph.microsoft.com_user:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, name!, properties, grid.area, fallback
+PersonaProperties:
+-properties: key, id, userPrincipalName, displayName, iconStyle, style
+Component.graph.microsoft.com_users:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, name!, properties, grid.area, fallback
+PersonaSetProperties:
+-properties: key, users, iconStyle, style
+Component.graph.microsoft.com_resource:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, name!, properties, grid.area, fallback
+ResourceProperties:
+-properties: key, id, resourceReference, resourceVisualization
+ResourceVisualization:
+-properties: key, media
+Component.graph.microsoft.com_file:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, name!, properties, grid.area, fallback
+FileProperties:
+-properties: key, name, extension, url
+Component.graph.microsoft.com_event:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, name!, properties, grid.area, fallback
+CalendarEventProperties:
+-properties: key, id, title, start, end, status, locations, onlineMeetingUrl, isAllDay, extension, url, attendees, organizer
+CalendarEventAttendee:
+-properties: key, name, email, title, type, status
+TabPage:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, height, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, layouts, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, title, tabStyle, iconName, grid.area, fallback, items
+CarouselPage:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, height, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, layouts, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, grid.area, fallback, items
+TableRow:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, showBorder, roundedCorners, style, horizontalCellContentAlignment, verticalCellContentAlignment, grid.area, fallback, cells
+TableCell:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, spacing, targetWidth, isSortKey, selectAction, style, layouts, bleed, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, grid.area, fallback, items
+TextRun:
+-properties: key, type!, id, lang, isVisible, isVisible.dynamic, isSortKey, text, text.dynamic, size, weight, color, isSubtle, fontType, italic, strikethrough, highlight, underline, selectAction, grid.area, fallback
+IconRun:
+-properties: key, type!, id, lang, isVisible, isVisible.dynamic, isSortKey, name, size, style, color, selectAction, grid.area, fallback
+ImageRun:
+-properties: key, type!, id, lang, isVisible, isVisible.dynamic, isSortKey, url, size, style, selectAction, themedUrls, grid.area, fallback
+CitationRun:
+-properties: key, type!, id, isVisible.dynamic, text, text.dynamic, referenceIndex, grid.area, fallback
+Column:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, layouts, bleed, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, width, grid.area, fallback, items
+AccordionPage:
+-properties: key, type!, id, requires, lang, isVisible, isVisible.dynamic, separator, height, horizontalAlignment, spacing, targetWidth, isSortKey, selectAction, style, showBorder, roundedCorners, layouts, bleed, minHeight, backgroundImage, verticalContentAlignment, rtl, maxHeight, headerTitle, headerSize, headerWrap, expandIconPosition, headerIconName, isExpanded, grid.area, fallback, items
+SubmitActionData:
+-properties: key, msteams, msTeams
+ImBackSubmitActionData:
+-properties: key, type!, value
+InvokeSubmitActionData:
+-properties: key, type!, value
+MessageBackSubmitActionData:
+-properties: key, type!, text, displayText, value
+SigninSubmitActionData:
+-properties: key, type!, value
+TaskFetchSubmitActionData:
+-properties: key, type!
+TeamsSubmitActionProperties:
+-properties: key, feedback
+TeamsSubmitActionFeedback:
+-properties: key, hide
+RefreshDefinition:
+-properties: key, action, userIds
+Authentication:
+-properties: key, text, connectionName, buttons, tokenExchangeResource
+AuthCardButton:
+-properties: key, type, title, image, value
+TokenExchangeResource:
+-properties: key, id, uri, providerId
+TeamsCardProperties:
+-properties: key, width, entities
+mention:
+-properties: key, type!, text, mentioned
+MentionedEntity:
+-properties: key, id, name, mentionType
+CardMetadata:
+-properties: key, webUrl
+Resources:
+-properties: key, strings
+StringResource:
+-properties: key, defaultValue, localizedValues
+AdaptiveCardReference:
+-properties: key, type!, title, icon, url, keywords, abstract, content
+DocumentReference:
+-properties: key, type!, title, icon, url, keywords, abstract
+@properties
+key (string): Defines optional key object. Keys seldom needed, but scenarios, specifying keys can help maintain visual state host application
+type (string): Must Chart.HorizontalBar.Stacked. [Chart.HorizontalBar.Stacked]
+id (string): unique identifier element or action. Input elements must id, otherwise will not validated and values will not sent Bot
+requires (object): list capabilities element requires host application support. If host application doesn't support least one listed capabilities, element not rendered (or fal... Default: {}
+lang (string): locale associated element
+isSortKey (boolean): Controls whether element should used as sort key elements allow sorting across collection elements. Default: false
+selectAction (string): Action will invoked when inline icon tapped or clicked. Action.ShowCard not supported
+style (string): style container. Container styles control colors background, border and text inside container, such way contrast reqs always met. [DEFAULT, EMPHASIS, ACCENT, GOOD, ATTENTION, WARNING]
+layouts (array layouts): layouts associated container. container can dynamically switch one layout another as card's width changes. See Container layouts more details
+minHeight (string): minimum height, pixels, container, <number>px format
+backgroundImage (string): Defines container's background image
+verticalContentAlignment (string): Controls vertical position image within bounding box. verticalContentAlignment only meaningful when width and height properties set and fitMode set either cover... Default: "Top". [TOP, CENTER, BOTTOM]
+rtl (boolean): Controls if content card rendered left-to-right or right-to-left
+$schema (string): URL Adaptive Card schema card authored against
+version (string): Adaptive Card schema version card authored against. Default: "1.0". [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6]
+fallbackText (string): text should displayed if client not able render card
+speak (string): text should spoken entire card
+refresh (object): Defines how card can refreshed making request target Bot
+authentication (object): Defines authentication information enable on-behalf-of single-sign-on or just-in-time OAuth. information used conjunction refresh property and Action.Execute general
+msteams (string): Defines optional Teams-specific portion action's data
+msTeams (string): Defines optional Teams-specific portion action's data. Equivalent msteams
+metadata (object): Metadata associated card
+resources (object): Resources card elements can reference
+references (array references): References can cited TextBlock and RichTextBlock elements
+grid.area (string): area Layout.AreaGrid layout element should displayed
+fallback (string): alternate element render if type one unsupported or if host application doesn't support capabilities specified requires property
+body (array CardElementArray): body card, comprised list elements displayed according layouts property. If layouts property not specified, Layout.Stack used
+actions (array ActionArray): card level actions, always appear bottom card
+title (string): title Loop Component, will only displayed hosts do not render Loop Component in-place
+title.dynamic (string): Defines expression whose evaluated value will used update title property action runtime
+iconUrl (string): URL (or Base64-encoded Data URI) PNG, GIF, JPEG or SVG image displayed left action's title. iconUrl accepts <icon-name>[,regular|filled] format display
+mode (string): Controls if action primary or secondary. Secondary actions appear overflow menu. Default: "primary". [PRIMARY, SECONDARY]
+tooltip (string): Controls tooltip text display when badge hovered
+tooltip.dynamic (string): Defines expression whose evaluated value will used update tooltip property action runtime
+isEnabled (boolean): Controls enabled state action. disabled action cannot clicked. If action represented as button, button's style will reflect state. Default: true
+isEnabled.dynamic (string): Defines expression whose evaluated value will used update isEnabled property action runtime
+isVisible (boolean): Controls visibility element. Default: true
+isVisible.dynamic (string): Defines expression whose evaluated value will used update isVisible property element runtime
+menuActions (array MenuActionArray): actions display overflow menu Split action button
+themedIconUrls (array ThemedUrl): set theme-specific icon URLs
+data (string): data send Bot when action executed. When expressed as object, data sent back Bot when action executed, adorned values inputs expressed as ...
+associatedInputs (string): Controls inputs associated Data.Query. When Data.Query executed, values associated inputs sent Bot, allowing perform filtering operations based o... [AUTO, NONE]
+conditionallyEnabled (boolean): Controls if action enabled only if least one required input filled user. Default: false
+verb (string): verb action
+url (string): URL (or Base64-encoded Data URI) image. Acceptable formats PNG, JPEG, GIF and SVG
+targetInputIds (array string): Ids inputs should reset
+commands (array string): commands run. Individual commands executed one after If command fails, subsequent commands will not executed. command fails when execution throws error. com...
+onFailure (string): command run if main commands fails
+targetElements (array targetElements): Ids elements toggle visibility
+theme (string): theme URL applies Default: "Light". [LIGHT, DARK]
+elementId (string): Id element change visibility
+card (object): card should displayed when action executed
+content (string): content popover, can element
+displayArrow (boolean): Controls if arrow should displayed towards element triggered popover. Default: true
+position (string): Controls where popover should displayed regards element triggered Default: "Above". [ABOVE, BELOW, BEFORE, AFTER]
+maxPopoverWidth (string): maximum width popover pixels, <number>px format
+popoverTitle (string): optional title popover, will only displayed mobile devices
+separator (boolean): Controls whether separator line should displayed above element visually separate previous element. No separator will displayed first element container, even ... Default: false
+height (string): height element. When set stretch, element will use remaining vertical space container. Default: "auto". [AUTO, STRETCH]
+targetWidth (string): Controls card width element should displayed. If targetWidth isn't specified, element rendered card widths. Using targetWidth makes possible author responsive c... [VERYNARROW, NARROW, STANDARD, WIDE]
+allowCollapseAllPages (boolean): Controls whether accordion pages can collapsed time. Default: true
+allowMultipleExpandedPages (boolean): Controls whether multiple accordion pages can expanded time. Default: false
+pages (array AccordionPage): pages accordion
+horizontalAlignment (string): Controls how image should aligned if must cropped or if using repeat fill mode. Default: "Left". [LEFT, CENTER, RIGHT]
+spacing (string): Controls amount space element and previous one. No space will added first element container. Default: "Default". [NONE, EXTRASMALL, SMALL, DEFAULT, MEDIUM, LARGE, EXTRALARGE, PADDING]
+showBorder (boolean): Controls if border should displayed around container. Default: false
+roundedCorners (boolean): Controls if container should rounded corners. Default: false
+bleed (boolean): Controls if container should bleed parent. bleeding container extends parent's padding. Default: false
+maxHeight (string): maximum height, pixels, container, <number>px format. When content container exceeds container's maximum height, vertical scrollbar displayed
+items (array CardElementArray): items (elements) cell
+horizontalItemsAlignment (string): Controls how content container should horizontally aligned. Default: "Center". [LEFT, CENTER, RIGHT]
+verticalItemsAlignment (string): Controls how content container should vertically aligned. Default: "Top". [TOP, CENTER, BOTTOM]
+itemFit (string): Controls how item should fit inside container. Default: "Fit". [FIT, FILL]
+minItemWidth (string): minimum width, pixels, item, <number>px format. Should not used if itemWidth set. Default: 0
+maxItemWidth (string): maximum width, pixels, item, <number>px format. Should not used if itemWidth set
+itemWidth (string): width, pixels, item, <number>px format. Should not used if maxItemWidth and/or minItemWidth set
+columnSpacing (string): space columns. Default: "Default". [NONE, EXTRASMALL, SMALL, DEFAULT, MEDIUM, LARGE, EXTRALARGE, PADDING]
+rowSpacing (string): space rows items. Default: "Default". [NONE, EXTRASMALL, SMALL, DEFAULT, MEDIUM, LARGE, EXTRALARGE, PADDING]
+columns (array columns): columns grid layout, defined as percentage available width or pixels using <number>px format
+areas (array GridArea): areas grid layout
+name (string): name area. place element area, set grid.area property match name area
+column (number): start column index area. Column indices start 1. Default: 1
+columnSpan (number): Defines how many columns area should span. Default: 1
+row (number): start row index area. Row indices start 1. Default: 1
+rowSpan (number): Defines how many rows area should span. Default: 1
+fillMode (string): Controls how image should fill area. Default: "Cover". [COVER, REPEATHORIZONTALLY, REPEATVERTICALLY, REPEAT]
+verticalAlignment (string): Controls how image should aligned if must cropped or if using repeat fill mode. Default: "Top". [TOP, CENTER, BOTTOM]
+themedUrls (array ThemedUrl): set theme-specific image URLs
+minWidth (string): minimum width column set. auto will automatically adjust column set's minimum width according content and using <number>px format will give column set explicit ... [AUTO]
+sources (array MediaSource): sources media. YouTube, Dailymotion and Vimeo, only one source can specified
+captionSources (array CaptionSource): caption sources media. Caption sources not used YouTube, Dailymotion or Vimeo sources
+poster (string): URL poster image display
+altText (string): alternate text media, used accessibility purposes
+mimeType (string): MIME type source
+label (string): label input. label should always provided ensure best UX especially users assistive technology
+labelFor (string): Id input RichTextBlock should act as label
+inlines (array RichTextBlockInlineArray): inlines making up rich text block
+firstRowAsHeaders (boolean): Controls whether first row table should treated as header. Default: true
+showGridLines (boolean): Controls if grid lines should displayed. Default: true
+gridStyle (string): style grid lines cells. [DEFAULT, EMPHASIS, ACCENT, GOOD, ATTENTION, WARNING]
+horizontalCellContentAlignment (string): Controls how content cell row should horizontally aligned default. property overrides horizontalCellContentAlignment property table and columns. [LEFT, CENTER, RIGHT]
+verticalCellContentAlignment (string): Controls how content cell row should vertically aligned default. property overrides verticalCellContentAlignment property table and columns. [TOP, CENTER, BOTTOM]
+rows (array TableRow): rows table
+width (string): width column. If expressed as number, represents relative weight column set. If expressed as string, auto will automatically adjust column's width according t... Default: "stretch"
+text (string): text can displayed end user when prompting authenticate
+text.dynamic (string): Defines expression whose evaluated value will used update text property TextBlock runtime
+size (string): size icon. Default: "Standard". [XXSMALL, XSMALL, SMALL, STANDARD, MEDIUM, LARGE, XLARGE, XXLARGE]
+weight (string): weight text. [LIGHTER, DEFAULT, BOLDER]
+color (string): color use render bar associated data point. See Chart colors reference. [GOOD, WARNING, ATTENTION, NEUTRAL, CATEGORICALRED, CATEGORICALPURPLE, CATEGORICALLAVENDER, CATEGORICALBLUE, CATEGORICALLIGHTBLUE, CATEGORICALTEAL, CATEGORICALGREEN, CATEGORICALLIME, CATEGORICALMARIGOLD, SEQUENTIAL1, SEQUENTIAL2, SEQUENTIAL3, SEQUENTIAL4, SEQUENTIAL5, SEQUENTIAL6, SEQUENTIAL7, SEQUENTIAL8, DIVERGINGBLUE, DIVERGINGLIGHTBLUE, DIVERGINGCYAN, DIVERGINGTEAL, DIVERGINGYELLOW, DIVERGINGPEACH, DIVERGINGLIGHTRED, DIVERGINGRED, DIVERGINGMAROON, DIVERGINGGRAY, SEQUENTIALRED1, SEQUENTIALRED2, SEQUENTIALRED3, SEQUENTIALRED4, SEQUENTIALRED5, SEQUENTIALRED6, SEQUENTIALRED7, SEQUENTIALRED8, SEQUENTIALGREEN1, SEQUENTIALGREEN2, SEQUENTIALGREEN3, SEQUENTIALGREEN4, SEQUENTIALGREEN5, SEQUENTIALGREEN6, SEQUENTIALGREEN7, SEQUENTIALGREEN8, SEQUENTIALYELLOW1, SEQUENTIALYELLOW2, SEQUENTIALYELLOW3, SEQUENTIALYELLOW4, SEQUENTIALYELLOW5, SEQUENTIALYELLOW6, SEQUENTIALYELLOW7, SEQUENTIALYELLOW8]
+isSubtle (boolean): Controls whether text should renderer using subtler variant select color
+fontType (string): type font use rendering. [DEFAULT, MONOSPACE]
+wrap (boolean): Controls if choice titles should wrap. Default: true
+maxLines (number): maximum number lines display
+facts (array Fact): facts set
+value Optional additional value will sent Bot. e.g., value can encode specific context action, e.g. unique identifiers or JSON object
+images (array Image): images set
+imageSize (string): size use render images set. Default: "Medium". [SMALL, MEDIUM, LARGE]
+backgroundColor (string): background color image
+allowExpand (boolean): Controls if image expandable Teams. property equivalent Image.allowExpand property
+fitMode (string): Controls how image should fitted inside bounding box. imageFit only meaningful when width and height properties set. When fitMode set contain, default style ... Default: "Fill". [COVER, CONTAIN, FILL]
+horizontalContentAlignment (string): Controls horizontal position image within bounding box. horizontalContentAlignment only meaningful when width and height properties set and fitMode set either c... Default: "Left". [LEFT, CENTER, RIGHT]
+isRequired (boolean): Controls whether input required. See Input validation more details. Default: false
+errorMessage (string): error message display when input fails validation. See Input validation more details
+valueChangedAction (string): Action.ResetInputs action will executed when value input changes
+maxLength (number): maximum length text input
+isMultiline (boolean): Controls if input should allow multiple lines text. Default: false
+placeholder (string): text display as placeholder when user not entered value
+inlineAction (string): action should displayed as button alongside input. Action.ShowCard not supported
+regex (string): regular expression validate input
+min (string): minimum time can selected, HH:MM format
+max (string): maximum time can selected, HH:MM format
+valueOn (string): value send Bot when toggle Default: "true"
+valueOff (string): value send Bot when toggle off. Default: "false"
+showTitle (boolean): Controls whether title visually displayed. When set false, title hidden view but remains accessible screen readers accessibility purposes. Default: true
+choices (array Choice): choices associated input
+choices.data (object): Data.Query object defines dataset dynamically fetch choices input
+isMultiSelect (boolean): Controls whether multiple choices can selected. Default: false
+useMultipleColumns (boolean): Controls whether choice items arranged multiple columns expanded mode, or single column. Default false. Default: false
+minColumnWidth (string): minimum width, pixels, column when using multi-column layout. ensures choice items remain readable even when horizontal space limited. Default 100 pixels
+dataset (string): dataset fetch data
+count (number): maximum number data items should returned query. Card authors should not specify property card payload. determined client and sent Bot ena...
+skip (number): number data items skipped query. Card authors should not specify property card payload. determined client and sent Bot enable pagination
+allowHalfSteps (boolean): Controls if user can select half stars. Default: false
+icon (string): Icon displayed reference. [MSWORD, MSEXCEL, MSPOWERPOINT, MSONENOTE, MSSHAREPOINT, MSVISIO, MSLOOP, MSWHITEBOARD, CODE, SKETCH, ADOBEILLUSTRATOR, ADOBEPHOTOSHOP, ADOBEINDESIGN, ADOBEFLASH, IMAGE, GIF, VIDEO, SOUND, ZIP, TEXT, PDF]
+badge (string): badge show button
+description (string): description text button
+pageAnimation (string): Controls type animation use navigate pages. Default: "Slide". [SLIDE, CROSSFADE, NONE]
+iconPosition (string): Controls position icon. Default: "Before". [BEFORE, AFTER]
+appearance (string): Controls strength background color. Default: "Filled". [FILLED, TINT]
+shape (string): Controls shape badge. Default: "Circular". [SQUARE, ROUNDED, CIRCULAR]
+labelPosition (string): Controls relative position label progress ring. Default: "Below". [BEFORE, AFTER, ABOVE, BELOW]
+componentUrl (string): URL Loop Component
+colorSet (string): name set colors use render chart. See Chart colors reference. [CATEGORICAL, SEQUENTIAL, SEQUENTIALRED, SEQUENTIALGREEN, SEQUENTIALYELLOW, DIVERGING]
+maxWidth (string): maximum width, pixels, chart, <number>px format
+showLegend (boolean): Controls whether chart's legend should displayed. Default: true
+valueColor (string): Controls color value displayed center Donut chart. [GOOD, WARNING, ATTENTION, NEUTRAL, CATEGORICALRED, CATEGORICALPURPLE, CATEGORICALLAVENDER, CATEGORICALBLUE, CATEGORICALLIGHTBLUE, CATEGORICALTEAL, CATEGORICALGREEN, CATEGORICALLIME, CATEGORICALMARIGOLD, SEQUENTIAL1, SEQUENTIAL2, SEQUENTIAL3, SEQUENTIAL4, SEQUENTIAL5, SEQUENTIAL6, SEQUENTIAL7, SEQUENTIAL8, DIVERGINGBLUE, DIVERGINGLIGHTBLUE, DIVERGINGCYAN, DIVERGINGTEAL, DIVERGINGYELLOW, DIVERGINGPEACH, DIVERGINGLIGHTRED, DIVERGINGRED, DIVERGINGMAROON, DIVERGINGGRAY, SEQUENTIALRED1, SEQUENTIALRED2, SEQUENTIALRED3, SEQUENTIALRED4, SEQUENTIALRED5, SEQUENTIALRED6, SEQUENTIALRED7, SEQUENTIALRED8, SEQUENTIALGREEN1, SEQUENTIALGREEN2, SEQUENTIALGREEN3, SEQUENTIALGREEN4, SEQUENTIALGREEN5, SEQUENTIALGREEN6, SEQUENTIALGREEN7, SEQUENTIALGREEN8, SEQUENTIALYELLOW1, SEQUENTIALYELLOW2, SEQUENTIALYELLOW3, SEQUENTIALYELLOW4, SEQUENTIALYELLOW5, SEQUENTIALYELLOW6, SEQUENTIALYELLOW7, SEQUENTIALYELLOW8]
+thickness (string): Controls thickness donut segments. Default Thick. [THIN, THICK]
+showOutlines (boolean): Controls whether outlines donut segments displayed. Default: true
+legend (string): legend text associated segment
+xAxisTitle (string): title x axis
+yAxisTitle (string): title y axis
+stacked (boolean): Controls if bars chart should displayed as stacks instead groups. Note: stacked vertical bar charts do not support custom Y ranges nor negative Y values. Default: false
+showBarValues (boolean): Controls if values should displayed bar. Default: false
+yMin (number): requested minimum Y axis range. value used runtime may different optimize visual presentation. yMin ignored if stacked set true
+yMax (number): requested maximum Y axis range. value used runtime may different optimize visual presentation. yMax ignored if stacked set true
+values (array BarChartDataValue): data points series
+x (string): x axis value data point. If x values x Chart.Line expressed as number, or if x values expressed as date string YYYY-MM-DD format, chart will re...
+y (number): y axis value data point. Default: 0
+displayMode (string): Controls how chart should visually laid out. Default: "AbsoluteWithAxis". [ABSOLUTEWITHAXIS, ABSOLUTENOAXIS, PARTTOWHOLE]
+subLabel (string): sub-label gauge
+showMinMax (boolean): Controls whether min/max values should displayed. Default: true
+showNeedle (boolean): Controls whether gauge's needle displayed. Default true. Default: true
+segments (array GaugeChartLegend): segments display gauge
+valueFormat (string): format used display gauge's value. Default: "Percentage". [PERCENTAGE, FRACTION]
+codeSnippet (string): code snippet display
+language (string): language code snippet expressed Default: "PlainText". [BASH, C, CPP, CSHARP, CSS, DOS, GO, GRAPHQL, HTML, JAVA, JS, JSON, OBJECTIVEC, PERL, PHP, PLAINTEXT, POWERSHELL, PYTHON, SQL, TYPESCRIPT, VBNET, VERILOG, VHDL, XML]
+startLineNumber (number): number represents line file where code snippet extracted. Default: 1
+properties (object): properties PersonaSet component
+userPrincipalName (string): UPN persona
+displayName (string): display name persona
+iconStyle (string): Defines style icon personas set. [PROFILEPICTURE, CONTACTCARD, NONE]
+users (array PersonaProperties): users PersonaSet component should display
+resourceReference (object): reference resource
+resourceVisualization (object): visualization resource
+media (string): media associated resource
+extension (string): extension event
+start (string): start date and time event
+end (string): end date and time event
+status (string): status attendee
+locations (array string): locations event
+onlineMeetingUrl (string): URL online meeting
+isAllDay (boolean): Indicates if event day
+attendees (array CalendarEventAttendee): attendees event
+organizer (object): organizer event
+email (string): email address attendee
+tabStyle (string): style tab. If style IconOnly, only icon will displayed, but title will still used accessibility purposes. Default: "IconAndText". [ICONONLY, ICONANDTEXT]
+iconName (string): name icon display tab
+cells (array TableCell): cells row
+italic (boolean): Controls if text should italicized. Default: false
+strikethrough (boolean): Controls if text should struck Default: false
+highlight (boolean): Controls if text should highlighted. Default: false
+underline (boolean): Controls if text should underlined. Default: false
+referenceIndex (number): index reference cited. Indexing starts 1
+headerTitle (string): header text accordion page
+headerSize (string): Controls size header. Default: "Medium". [SMALL, MEDIUM, LARGE, XLARGE]
+headerWrap (boolean): Controls whether header text wrapped. Default: true
+expandIconPosition (string): Controls position expand/collapse icon. Default: "Start". [START, INLINE, END]
+headerIconName (string): name icon display header
+isExpanded (boolean): Controls whether page expanded. Default: false
+displayText (string): optional text will displayed as new message conversation, as if end-user sent displayText not sent Bot
+feedback (object): Defines how feedback provided end-user when action executed
+hide (boolean): Defines if feedback message should displayed after action executed
+action (object): Action.Execute action invoke refresh card
+userIds (array string): list user Ids card will automatically refreshed. Teams, chats or channels more than 60 users, card will automatically refresh only users specified ...
+connectionName (string): identifier registered OAuth connection setting information
+buttons (array AuthCardButton): buttons should displayed user when prompting authentication. array MUST contain one button type “signin”. button types not currently supported
+tokenExchangeResource (object): Provides information required enable on-behalf-of single sign-on user authentication
+image (string): URL image display alongside button’s caption
+uri (string): application ID or resource identifier exchange token behalf property identity provider- and application-specific
+providerId (string): identifier identity provider attempt token exchange
+entities (array mention): Teams-specific entities associated card
+mentioned (object): Defines entity mentioned
+mentionType (string): type mentioned entity. Default: "Person". [PERSON, TAG]
+webUrl (string): URL card originates When webUrl set, card dubbed Adaptive Card-based Loop Component and, when pasted Teams or Loop Component-capable host applications,
+strings (object): String resources can provide translations multiple languages. String resources make possible craft cards automatically localized according language settings app...
+defaultValue (string): default value string, used when no matching localized value found
+localizedValues (object): Localized values string, where keys represent locale (e.g. en-US) <ISO 639-1>(-<ISO 3166-1 alpha-2>) format. <ISO 639-1> 2-letter language code and `<ISO 3166-1 alpha...
+keywords (array string): Keywords reference. Maximum allowed 3
+abstract (string): abstract reference, providing short summary reference's content

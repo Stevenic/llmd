@@ -14,13 +14,13 @@
     "is", "are", "was", "were", "been", "being", "be", "has", "have", "had",
     "of", "in", "on", "at", "for", "with", "by", "from", "to", "into", "about", "over", "between", "through", "during",
     "this", "these", "those", "which", "who", "it", "its", "they", "their", "them",
-    "and", "or", "also", "too",
+    "also", "too",
     "all", "each", "every", "any", "some", "both", "other", "same"
   ],
-  "protect_words": ["no", "not", "never", "must", "should", "may", "always"],
+  "protect_words": ["no", "not", "never", "must", "should", "may", "always", "if", "and", "or"],
   "phrase_map": {
     "in order to": "to",
-    "as well as": "|",
+    "as well as": "¦",
     "due to": "because",
     "is able to": "can",
     "such as": "e.g.",

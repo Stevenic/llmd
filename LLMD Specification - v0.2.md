@@ -59,7 +59,7 @@ Example:
 
 ```
 @Auth
-:methods=oauth2|apikey rate=1000/m
+:methods=oauth2¦apikey rate=1000/m
 -oauth2 user-app
 ```
 
@@ -105,11 +105,13 @@ Rules:
 * Keys lowercase
 * No spaces around `=`
 * Space separates pairs
+* `¦` (U+00A6, broken bar) separates multiple values within a single attribute
+* Split on the first `=` to separate key from value. Keys never contain `=`.
 
 Example:
 
 ```
-:methods=oauth2|apikey rate=1000/m required=true
+:methods=oauth2¦apikey rate=1000/m required=true
 ```
 
 Preferred over prose whenever possible.
@@ -119,7 +121,7 @@ Preferred over prose whenever possible.
 Keys prefixed with `_` are reserved for compiler-generated metadata:
 
 * `:_col=<header>` — column header for a 2-column property table (emitted when the value column header is informative)
-* `:_cols=col1|col2|col3` — column headers for a multi-column table
+* `:_cols=col1¦col2¦col3` — column headers for a multi-column table
 * `:_pfx=<prefix>` — common prefix extracted from subsequent keys; the reader should prepend this prefix to restore full key names
 
 ### Chunked Emission
@@ -398,14 +400,14 @@ Rate limit: 1000 requests per minute.
 LLMD v0.2 (c2):
 
 ```
-@auth
-:rate_limit=1000/m
-API supports authentication via OAuth2 API keys
--OAuth2 user-facing apps
--API keys server-to-server
+@authentication
+API supports authentication via OAuth2 and API keys
+-Use OAuth2 user-facing apps
+-Use API keys server-to-server
+:rate_limit=1000/m.
 ```
 
-~24 tokens
+~22 tokens
 
 No repeated paths.
 No verbose prose.

@@ -1,6 +1,6 @@
 @api_reference
 @authentication
-API supports authentication via OAuth2 API keys
+API supports authentication via OAuth2 and API keys
 -Use OAuth2 user-facing applications
 -Use API keys server-to-server communication
 :rate_limit=1000/m

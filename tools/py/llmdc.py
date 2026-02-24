@@ -458,27 +458,27 @@ def emit_llmd(ir, blocks, config):
                     if k:
                         kv_buffer.append({"key": k, "value": v})
                     else:
-                        out.append(process_text(r[0] + "|" + r[1]))
+                        out.append(process_text(r[0] + "¦" + r[1]))
             elif table_type == "keyed_multi":
                 # Emit column headers
-                col_headers = "|".join(norm_key(h) for h in rows[0])
+                col_headers = "¦".join(norm_key(h) for h in rows[0])
                 out.append(":_cols=" + col_headers)
                 for r in rows[1:]:
                     k = norm_key(r[0])
                     vals = [process_cell(c, ci + 1) for ci, c in enumerate(r[1:])]
                     if k:
-                        kv_buffer.append({"key": k, "value": "|".join(vals)})
+                        kv_buffer.append({"key": k, "value": "¦".join(vals)})
                     else:
                         cells = [process_cell(c, ci) for ci, c in enumerate(r)]
-                        out.append("|".join(cells))
+                        out.append("¦".join(cells))
             else:
-                # Raw: emit column headers then c1|c2|c3
+                # Raw: emit column headers then c1¦c2¦c3
                 if len(rows[0]) >= 2:
-                    col_headers = "|".join(norm_key(h) for h in rows[0])
+                    col_headers = "¦".join(norm_key(h) for h in rows[0])
                     out.append(":_cols=" + col_headers)
                 for r in rows[1:]:
                     cells = [process_cell(c, ci) for ci, c in enumerate(r)]
-                    out.append("|".join(cells))
+                    out.append("¦".join(cells))
 
         elif node["type"] == "block_ref":
             ensure_scope()

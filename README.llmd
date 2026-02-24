@@ -1,96 +1,98 @@
 @llmd__llm-optimized_deterministic_markdown
->LLMD is deterministic compiler system converts Markdown into compact, token-efficient format designed for LLM context windows. It replaces verbose hierarchical Markdown with implicit scoping, structured attributes, and configurable compression — reducing token counts while preserving semantic recoverability.
->Author: Steven Ickman | License: MIT
->---
+LLMD deterministic compiler system converts Markdown compact, token-efficient format designed LLM context windows. replaces verbose hierarchical Markdown implicit scoping, structured attributes, and configurable compression — reducing token counts while preserving semantic recoverability
+Author: Steven Ickman | License: MIT
 @quick_start
 ::bash
 <<<
-# Compile a Markdown file at compression level 2 node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd # Compile an entire directory node tools/js/llmdc.js corpora/samples/ -c 2 -o output.llmd
+# JavaScript (Node.js 18+) node tools/js/llmdc.js docs/llmdc.md -c 2 -o docs/llmdc.llmd # Python (3.10+) python tools/py/llmdc.py docs/llmdc.md -c 2 -o docs/llmdc.llmd # Rust (single binary, no runtime needed) cargo run --manifest-path tools/rust/Cargo.toml -- docs/llmdc.md -c 2 -o docs/llmdc.llmd
 >>>
->Python equivalents are available in tools/py/ (requires Python 3.10+, no dependencies).
->---
+three implementations produce identical output. Use whichever fits your environment
 @what_it_looks_like
->Markdown input:
+Markdown input:
 ::markdown
 <<<
 ## Authentication The API supports authentication via OAuth2 and API keys. - Use OAuth2 for user-facing apps. - Use API keys for server-to-server. Rate limit: 1000 requests per minute.
 >>>
->LLMD output (c2):
+LLMD output (c2):
 ::code
 <<<
-@auth :rate_limit=1000/m >API supports authentication via OAuth2 API keys. >OAuth2 user-facing apps. >API keys server-to-server.
+@authentication API supports authentication via OAuth2 and API keys -Use OAuth2 user-facing apps -Use API keys server-to-server :rate_limit=1000/m.
 >>>
-:every_line_starts_with_a_type_prefix=@ scope, : attribute, > content, :: code block, -> relation.
->---
+:every_line_starts_with_a_type_prefix=@ scope, : attribute, - list item, → relation, :: code block — or is plain text (no prefix) for prose.
 @when_to_use_llmd
 @stuffing_reference_docs_into_llm_context
->You have API docs, component libraries, or style guides need to fit in system prompt or RAG chunk. LLMD strips markdown formatting overhead while keeping content machine-readable.
+You API docs, component libraries, or style guides need fit system prompt or RAG chunk. LLMD strips markdown formatting overhead while keeping content machine-readable
 @cssdesign_system_references
->Component tables with class names like flm-button--primary compress well — compiler preserves hyphens in keys, extracts common prefixes, and retains column semantics so LLM can generate correct markup.
+Component tables class names like flm-button--primary compress well — compiler preserves hyphens keys, extracts common prefixes, and retains column semantics so LLM can generate correct markup
 @api_specification_compression
->Endpoint tables, parameter lists, and status code references convert naturally to :k=v attributes and > items. Code examples pass through untouched inside :: blocks.
+Endpoint tables, parameter lists, and status code references convert naturally :k=v attributes and - list items. Code examples pass untouched inside :: blocks
 @multi-document_context_packing
->When you need to fit several documents into single context window, compile directory at c2. compiler handles file ordering deterministically and merges everything into one .llmd output.
+When you need fit several documents single context window, compile directory c2. compiler handles file ordering deterministically and merges everything one .llmd output
 @agentic_tool_context
->Feed .llmd files as tool/function descriptions or system instructions to agents. format is designed so LLMs can parse scoped structure without explicit instructions.
->---
+Feed .llmd files as tool/function descriptions or system instructions agents. format designed so LLMs can parse scoped structure without explicit instructions
 @project_structure
 ::code
 <<<
-llmd/ ├── README.md # This file ├── LICENSE # MIT │ ├── LLMD Specification - v0.1.md # Format spec (line types, scoping, normalization) ├── LLMD Compiler Design v0.1.md # 6-stage pipeline spec │ ├── .architecture/ │ └── ARCHITECTURE.md # System overview and diagrams │ ├── docs/ # Tool reference documentation │ ├── llmdc.md # Compiler reference │ └── llmdc.llmd # Pre-compiled LLMD version │ ├── config/ │ └── llmdc.config.json # Compiler config (stopwords, phrases, units) │ ├── tools/ │ ├── js/ # Node.js implementations │ │ └── llmdc.js # Compiler │ └── py/ # Python implementations │ └── llmdc.py # Compiler │ └── corpora/ └── samples/ # Sample documents for testing ├── api-spec.md └── fluentlm-components.md
+llmd/ ├── README.md # This file ├── LICENSE # MIT │ ├── LLMD Specification - v0.2.md # Format spec (line types, scoping, normalization) ├── LLMD Compiler Design v0.2.md # 6-stage pipeline spec │ ├── .architecture/ │ └── ARCHITECTURE.md # System overview and diagrams │ ├── docs/ # Tool reference documentation │ ├── llmdc.md # Compiler reference │ ├── schema2llmd.md # Schema converter reference │ └── llmdc.llmd # Pre-compiled LLMD version │ ├── config/ │ └── llmdc.config.json # Compiler config (stopwords, phrases, units) │ ├── tools/ │ ├── js/ # Node.js implementations │ │ ├── llmdc.js # Compiler │ │ └── schema2llmd.js # Schema converter │ ├── py/ # Python implementations │ │ ├── llmdc.py # Compiler │ │ └── schema2llmd.py # Schema converter │ └── rust/ # Rust implementation │ └── src/ # Compiler + schema converter │ └── corpora/ └── samples/ # Sample documents for testing ├── api-spec.md └── fluentlm-components.md
 >>>
->---
 @tools
-:_cols=tool|js|python|purpose
->llmdc|tools/js/llmdc.js|tools/py/llmdc.py|Compile Markdown → LLMD
+:_cols=tool¦js¦python¦rust¦purpose
+llmdc¦tools/js/llmdc.js¦tools/py/llmdc.py¦tools/rust/¦Compile Markdown → LLMD
+schema2llmd¦tools/js/schema2llmd.js¦tools/py/schema2llmd.py¦tools/rust/¦Convert JSON Schema → LLMD
 :full_reference_docs=docs/
->---
+@performance
+three implementations produce identical output. Measured Windows 11 (median 5 runs, c2 compression):
+:_cols=file¦js_node_22¦python_310¦rust_release
+:api-specmd_13_kb=140 ms¦238 ms¦61 ms fluentlm-componentsmd_45_kb=243 ms¦354 ms¦73 ms
+Run pwsh tools/bench.ps1 or bash tools/bench.sh reproduce
 @compression_levels
-:_cols=level|name|what_it_does
->c0|Structural normalize|Whitespace cleanup, structure conversion
->c1|Compact structure|Merge :k=v pairs, collapse blanks, prefix extraction
->c2|Token compaction|Stopword removal, phrase/unit normalization, boolean compression
->---
+:_cols=level¦name¦what_it_does
+c0¦Structural normalize¦Whitespace cleanup, structure conversion
+c1¦Compact structure¦Merge :k=v pairs, collapse blanks, prefix extraction
+c2¦Token compaction¦Stopword removal, phrase/unit normalization, boolean compression
 @key_features
->Hyphen-preserving key normalization — CSS class names like flm-button--primary survive compilation intact
->Table classification — 2-column property tables emit :k=v, 3+ column tables with identifier keys emit :key=v1|v2, others emit > rows with :_cols= headers
->Common prefix extraction — When keys share prefix (e.g., flm-text--), it's factored out as :_pfx= to avoid repetition
->Chunked KV emission — Large attribute groups split across multiple lines (max_kv_per_line, default 4)
->Boolean compression — Columns of Yes/No, true/false, enabled/disabled → Y/N, T/F
->Column header preservation — :_col= and :_cols= meta-attributes retain table column semantics
->Code block passthrough — Fenced code blocks preserved exactly inside ::lang / <<< / >>> delimiters
->Deterministic output — Same input + config always produces identical output
->---
+-Hyphen-preserving key normalization — CSS class names like flm-button--primary survive compilation intact
+-Table classification — 2-column property tables emit :k=v, 3+ column tables identifier keys emit :key=v1¦v2, others emit plain text rows :_cols= headers
+-Common prefix extraction — When keys share prefix (e.g., flm-text--), factored out as :_pfx= avoid repetition
+-Chunked KV emission — Large attribute groups split across multiple lines (max_kv_per_line, default 4)
+-Boolean compression — Columns Yes/No, true/false, enabled/disabled → Y/N, T/F
+-Column header preservation — :_col= and :_cols= meta-attributes retain table column semantics
+-Code block passthrough — Fenced code blocks preserved exactly inside ::lang / <<< / >>> delimiters
+-Deterministic output — input + config always produces identical output
 @typical_workflow
 ::bash
 <<<
 # Compile your docs at c2 (good default) node tools/js/llmdc.js my-docs/ -c 2 -o context.llmd # Or compile at c0/c1 for less aggressive compression node tools/js/llmdc.js my-docs/ -c 0 -o context.llmd
 >>>
->---
 @using_with_agentic_coding_tools
->LLMD works well with AI coding assistants like Claude Code and GitHub Copilot. These tools can automate compilation workflow, and .llmd files make efficient context for AI-driven tasks.
+LLMD works well AI coding assistants like Claude Code and GitHub Copilot. tools can automate compilation workflow, and .llmd files make efficient context AI-driven tasks
 @feed_llmd_as_context
->Compiled .llmd files are smaller and cheaper to include in system prompts, tool descriptions, or RAG results. If your agent needs component reference or API spec, give it .llmd version instead of raw Markdown.
+Compiled .llmd files smaller and cheaper include system prompts, tool descriptions, or RAG results. If your agent needs component reference or API spec, give .llmd version instead raw Markdown
 @automate_compilation_in_your_workflow
->Add instructions to your project's CLAUDE.md or Copilot instructions file:
+Add instructions your project's CLAUDE.md or Copilot instructions file:
 ::markdown
 <<<
 ## LLMD Compilation When documentation files in `docs/` are modified, recompile them: - Run `node tools/js/llmdc.js docs/ -c 2 -o docs/compiled.llmd` - The compiled output goes to `docs/compiled.llmd` - Always compile at c2 unless asked otherwise
 >>>
 @let_the_agent_run_compilation
->For Claude Code, you can ask it to compile in one shot:
+Claude Code, you can ask compile one shot:
 ::code
 <<<
 Compile corpora/samples/ at c2 and tell me the token savings.
 >>>
->agent can execute shell commands, read output, and summarize results without you needing to remember CLI arguments.
+agent can execute shell commands, read output, and summarize results without you needing remember CLI arguments
 @tips_for_best_results
->Point agent at docs/ — reference docs in docs/*.md describe every CLI option and config key. agent reads these can run any tool correctly.
->Use config file — config/llmdc.config.json is self-documenting. Agents can read and modify it for tuning.
->Batch compile on change — Set up hook or ask agent to recompile whenever source docs change, so .llmd versions stay current.
->---
+-Point agent docs/ — reference docs docs/*.md describe CLI option and config key. agent reads can run tool correctly
+-Use config file — config/llmdc.config.json self-documenting. Agents can read and modify tuning
+-Batch compile change — Set up hook or ask agent recompile whenever source docs change, so .llmd versions stay current
+@llmd_reading_guide_for_llm_system_prompts
+When embedding .llmd content system prompt or tool context, include following instructions so model can interpret format correctly:
+::code
+<<<
+Content below is LLMD v0.2 — a compressed, token-optimized format. Read it as follows: Line types (each non-empty line starts with exactly one prefix, or none for prose): - @name — scope. Sets the current topic. All following lines belong to this scope until the next @. Hierarchy is flattened: @Auth after @API means separate scopes, not nested. Reconstruct context from scope names. - :k=v k2=v2 — attributes. Key-value facts about the current scope. ¦ (broken bar, U+00A6) separates multiple values (e.g., methods=oauth2¦apikey). Multiple pairs may appear on one line, space-separated. Parse each pair by splitting on the first = (keys never contain =). - plain text (no prefix) — prose about the current scope. - -item — list item. Nested depth uses dots: -. child, -.. grandchild. - →Node — relation. Current scope depends on Node. ←Node is reverse. =Node is equivalence. Trailing ? means optional (e.g., →Cache?). - ::lang followed by <<<...>>> — literal block. Code or data preserved exactly, not compressed. - ~k=v — file metadata. Optional, appears at top of file. Reserved meta-attributes (compiler-generated, prefixed with _): - :_col=<header> — column header for a 2-column property table. - :_cols=c1¦c2¦c3 — column headers for a multi-column table. - :_pfx=<prefix> — common prefix extracted from subsequent keys. Prepend it to restore full key names (e.g., :_pfx=flm-text-- then :secondary=... means the full key is flm-text--secondary). Compression artifacts (content may be shortened — infer original phrasing): - Common words (the, a, is, are, of, etc.) may be removed from prose and list items. - Long phrases replaced with short forms (e.g., "in order to" → "to", "application programming interface" → "API", "specification" → "spec"). - Units shortened (e.g., "1000 requests per minute" → "1000/m", "seconds" → "s", "megabytes" → "MB"). - Boolean values compressed (Yes/No → Y/N, true/false → T/F, enabled/disabled → Y/N). - Trailing periods stripped from prose and list items. - Negation (no, not, never) and modals (must, should, may, always) are always preserved.
+>>>
 @specifications
-:_cols=document|description
->LLMD Specification v0.1|Format definition: line types, scoping model, normalization rules, compression levels
->Compiler Design v0.1|6-stage pipeline architecture, table classification, prefix extraction, config reference
->Architecture|System overview, component diagrams, file relationships
+:_cols=document¦description
+LLMD spec v0.2¦Format definition: line types, scoping model, normalization rules, compression levels
+Compiler Design v0.2¦6-stage pipeline architecture, table classification, prefix extraction, config reference
+Architecture¦System overview, component diagrams, file relationships

@@ -176,8 +176,8 @@ Example: `flm-text--secondary`, `flm-text--disabled`, `flm-text--error` → `:_p
 The compiler classifies each table using `classifyTable()`, which returns one of three types:
 
 * **`property`** — 2-column table with unique, identifier-like first column. Emit `:k=v` for each row. If the second column header is informative (not generic like "Value"/"Description"), emit `:_col=<header>` first.
-* **`keyed_multi`** — 3+ column table with unique, identifier-like first column. Emit `:_cols=col1|col2|col3` header, then `:key=val1|val2` for each row.
-* **`raw`** — anything else (non-unique keys, prose-like first column, inconsistent column counts). Emit `:_cols=col1|col2|col3` header, then `c1|c2|c3` per row (plain text, no prefix).
+* **`keyed_multi`** — 3+ column table with unique, identifier-like first column. Emit `:_cols=col1¦col2¦col3` header, then `:key=val1¦val2` for each row.
+* **`raw`** — anything else (non-unique keys, prose-like first column, inconsistent column counts). Emit `:_cols=col1¦col2¦col3` header, then `c1¦c2¦c3` per row (plain text, no prefix).
 
 A column is "identifier-like" when its values are unique across all data rows, start with a letter/dot/hyphen, and contain no more than 4 whitespace-delimited words.
 
@@ -272,7 +272,7 @@ The compiler MUST:
   "protect_words": ["no","not","never","must","should","may"],
   "phrase_map": {
     "in order to": "to",
-    "as well as": "|",
+    "as well as": "¦",
     "due to": "because",
     "is able to": "can",
     "is used to": "",
@@ -345,9 +345,9 @@ IR:
 LLMD (c2):
 
 ```
-@auth
+@authentication
+API supports OAuth2 and API keys
+-Use OAuth2 user apps
+-Use API keys server-to-server
 :rate_limit=1000/m
-API supports OAuth2 API keys
--OAuth2 user apps
--API keys server-to-server
 ```

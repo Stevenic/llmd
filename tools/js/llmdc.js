@@ -454,31 +454,31 @@ function emitLLMD(ir, blocks, config) {
             const k = normKey(rows[r][0]);
             const v = processCell(rows[r][1], 1);
             if (k) kvBuffer.push({ key: k, value: v });
-            else out.push(processText(rows[r][0] + "|" + rows[r][1]));
+            else out.push(processText(rows[r][0] + "¦" + rows[r][1]));
           }
         } else if (tableType === "keyed_multi") {
           // Emit column headers
-          const colHeaders = rows[0].map(h => normKey(h)).join("|");
+          const colHeaders = rows[0].map(h => normKey(h)).join("¦");
           out.push(":_cols=" + colHeaders);
-          // Emit as :key=val1|val2|...
+          // Emit as :key=val1¦val2¦...
           for (let r = 1; r < rows.length; r++) {
             const k = normKey(rows[r][0]);
             const vals = rows[r].slice(1).map((c, ci) => processCell(c, ci + 1));
-            if (k) kvBuffer.push({ key: k, value: vals.join("|") });
+            if (k) kvBuffer.push({ key: k, value: vals.join("¦") });
             else {
               const cells = rows[r].map((c, ci) => processCell(c, ci));
-              out.push(cells.join("|"));
+              out.push(cells.join("¦"));
             }
           }
         } else {
-          // Raw: emit column headers then c1|c2|c3
+          // Raw: emit column headers then c1¦c2¦c3
           if (rows[0].length >= 2) {
-            const colHeaders = rows[0].map(h => normKey(h)).join("|");
+            const colHeaders = rows[0].map(h => normKey(h)).join("¦");
             out.push(":_cols=" + colHeaders);
           }
           for (let r = 1; r < rows.length; r++) {
             const cells = rows[r].map((c, ci) => processCell(c, ci));
-            out.push(cells.join("|"));
+            out.push(cells.join("¦"));
           }
         }
         break;

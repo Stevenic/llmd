@@ -1,0 +1,76 @@
+@schema2llmd__json_schema_to_llmd_converter
+Converts JSON Schema files compressed LLMD format. Extracts object definitions, properties, types, descriptions, and allowed values, then emits compact two-scope LLMD document suitable LLM context windows
+Available as node tools/js/schema2llmd.js, python tools/py/schema2llmd.py, and cargo run --bin schema2llmd
+@usage
+::bash
+<<<
+# Basic conversion (output to stdout) schema2llmd schema.json # Convert to file schema2llmd schema.json -o output.llmd # With explicit config schema2llmd schema.json -o output.llmd --config config/llmdc.config.json
+>>>
+@options
+:_cols=option¦description¦default
+<schema.json>¦Input JSON Schema file (required)¦—
+-o, --output <path>¦Output file (stdout if omitted)¦stdout
+--config <path>¦Config file path¦auto-detect
+-h, --help¦Show help¦
+@config
+Uses llmdc.config.json as main compiler (auto-detected llmdc.config.json or config/llmdc.config.json). following config keys apply schema2llmd output:
+:_cols=key¦used_for
+stopwords¦Removed property descriptions
+protect_words¦Never removed descriptions
+phrase_map¦Phrase replacements descriptions
+units¦Unit normalizations descriptions
+bool_compress¦Boolean value compression descriptions
+@how_it_works
+@1_schema_parsing
+Reads JSON Schema file and walks definitions definitions key root). definition classified as either "object definition" properties, allOf, or type: "object") or scalar/enum (skipped)
+$ref pointers resolved recursively. allOf, anyOf, and oneOf branches merged collect full property set
+@2_output_structure
+tool emits two-scope LLMD document:
+::code
+<<<
+@Objects.Properties Required properties marked with `!`. :ObjectA.properties=prop1!, prop2, prop3 :ObjectB.properties=prop1, prop4! @Properties -prop1 (string): Description text [allowed, values] -prop2 (array of Item): Description text Default: "foo". -prop3 (boolean): Description text -prop4 (number): Description text
+>>>
+@Objects.Properties — One : attribute per object definition, listing its property names. Required properties are marked with !.
+@Properties — One - list item per unique property across all definitions, showing:
+-Property name
+-Type (resolved type, $ref, oneOf/anyOf)
+-Compressed description description field)
+-Default value if present
+-Allowed values extracted const, enum, oneOf, or pattern
+@3_type_resolution
+:_cols=schema_pattern¦emitted_type
+"type": "string"¦string
+"type": "array" items.$ref → Foo¦array Foo
+"$ref" string definition¦string
+"oneOf" mixed types¦string¦number (¦-separated)
+No type info¦any
+@4_pattern_value_extraction
+When property pattern field (regex), tool attempts extract literal allowed values. handles:
+-Top-level alternation: ^(foo|bar|baz)$ → [foo, bar, baz]
+-Character class patterns: ^[A-a][B-b]$ → uses first character class
+-Nested groups balanced parentheses
+-Combined $ref resolution pattern-based enums
+@5_description_compression
+Property descriptions compressed using c2 pipeline as main compiler:
+-Phrase map — longest-first, case-insensitive replacement (e.g., →
+-Unit normalization — e.g., "1000/m" → "1000/m"
+-Boolean compression — Yes/No → Y/N, true/false → T/F
+-Stopword removal — common words removed, protected words preserved
+-Trailing period stripping — preserves ..., e.g., i.e., etc.
+-Markdown link stripping — text → text
+-Truncation — descriptions capped 200 characters
+@example
+@input_excerpt_from_a_json_schema
+::json
+<<<
+{ "definitions": { "TextBlock": { "type": "object", "properties": { "type": { "const": "TextBlock" }, "text": { "type": "string", "description": "The text to display." }, "size": { "type": "string", "description": "The size of the text.", "oneOf": [ { "const": "small" }, { "const": "default" }, { "const": "medium" }, { "const": "large" } ] }, "wrap": { "type": "boolean", "description": "Whether the text should wrap.", "default": false } }, "required": ["type", "text"] } } }
+>>>
+@output
+::code
+<<<
+@Objects.Properties Required properties marked with `!`. :TextBlock.properties=type!, text!, size, wrap @Properties -type (string): [TextBlock] -text (string): text display -size (string): size text. [small, default, medium, large] -wrap (boolean): Whether text should wrap. Default: false
+>>>
+@differences_from_llmdc
+:_cols=aspect¦llmdc¦schema2llmd
+:input=Markdown files/directories¦Single JSON Schema file parsing=6-stage Markdown pipeline¦JSON Schema definitions walk scope_model=Headings → @scope¦Fixed two-scope structure compression=Full c0/c1/c2 pipeline¦c2 description compression only
+:tables=Classified and converted¦N/A (no tables in schema) code_blocks=Preserved in <<</>>>¦N/A

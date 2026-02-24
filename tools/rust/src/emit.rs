@@ -326,7 +326,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                                 kv_buffer.push(KvPair { key: k, value: v });
                             } else {
                                 out.push(
-                                    process_text(&format!("{}|{}", r[0], r[1])),
+                                    process_text(&format!("{}¦{}", r[0], r[1])),
                                 );
                             }
                         }
@@ -334,7 +334,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                     "keyed_multi" => {
                         let col_headers: Vec<String> =
                             rows[0].iter().map(|h| norm_key(h)).collect();
-                        out.push(format!(":_cols={}", col_headers.join("|")));
+                        out.push(format!(":_cols={}", col_headers.join("¦")));
                         for r in &rows[1..] {
                             let k = norm_key(&r[0]);
                             let vals: Vec<String> = r[1..]
@@ -345,7 +345,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                             if !k.is_empty() {
                                 kv_buffer.push(KvPair {
                                     key: k,
-                                    value: vals.join("|"),
+                                    value: vals.join("¦"),
                                 });
                             } else {
                                 let cells: Vec<String> = r
@@ -353,7 +353,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                                     .enumerate()
                                     .map(|(ci, c)| process_cell(c, ci, &bool_cols))
                                     .collect();
-                                out.push(cells.join("|"));
+                                out.push(cells.join("¦"));
                             }
                         }
                     }
@@ -362,7 +362,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                         if rows[0].len() >= 2 {
                             let col_headers: Vec<String> =
                                 rows[0].iter().map(|h| norm_key(h)).collect();
-                            out.push(format!(":_cols={}", col_headers.join("|")));
+                            out.push(format!(":_cols={}", col_headers.join("¦")));
                         }
                         for r in &rows[1..] {
                             let cells: Vec<String> = r
@@ -370,7 +370,7 @@ pub fn emit_llmd(ir: &[IrNode], blocks: &[CodeBlock], config: &Config) -> Vec<St
                                 .enumerate()
                                 .map(|(ci, c)| process_cell(c, ci, &bool_cols))
                                 .collect();
-                            out.push(cells.join("|"));
+                            out.push(cells.join("¦"));
                         }
                     }
                 }

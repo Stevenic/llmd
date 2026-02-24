@@ -37,10 +37,10 @@ Rate limit: 1000 requests per minute.
 **LLMD output (c2):**
 ```
 @authentication
-The API supports authentication via OAuth2 and API keys
--Use OAuth2 for user-facing apps
--Use API keys for server-to-server
-:rate_limit=1000 requests per minute.
+API supports authentication via OAuth2 and API keys
+-Use OAuth2 user-facing apps
+-Use API keys server-to-server
+:rate_limit=1000/m.
 ```
 
 Every line starts with a type prefix: `@` scope, `:` attribute, `-` list item, `→` relation, `::` code block — or is plain text (no prefix) for prose.
@@ -56,7 +56,7 @@ You have API docs, component libraries, or style guides that need to fit in a sy
 Component tables with class names like `flm-button--primary` compress well — the compiler preserves hyphens in keys, extracts common prefixes, and retains column semantics so the LLM can generate correct markup.
 
 ### API specification compression
-Endpoint tables, parameter lists, and status code references convert naturally to `:k=v` attributes and `>` items. Code examples pass through untouched inside `::` blocks.
+Endpoint tables, parameter lists, and status code references convert naturally to `:k=v` attributes and `-` list items. Code examples pass through untouched inside `::` blocks.
 
 ### Multi-document context packing
 When you need to fit several documents into a single context window, compile a directory at c2. The compiler handles file ordering deterministically and merges everything into one `.llmd` output.
@@ -81,6 +81,7 @@ llmd/
 │
 ├── docs/                                          # Tool reference documentation
 │   ├── llmdc.md                                   # Compiler reference
+│   ├── schema2llmd.md                             # Schema converter reference
 │   └── llmdc.llmd                                 # Pre-compiled LLMD version
 │
 ├── config/
@@ -88,11 +89,13 @@ llmd/
 │
 ├── tools/
 │   ├── js/                                        # Node.js implementations
-│   │   └── llmdc.js                               # Compiler
+│   │   ├── llmdc.js                               # Compiler
+│   │   └── schema2llmd.js                         # Schema converter
 │   ├── py/                                        # Python implementations
-│   │   └── llmdc.py                               # Compiler
+│   │   ├── llmdc.py                               # Compiler
+│   │   └── schema2llmd.py                         # Schema converter
 │   └── rust/                                      # Rust implementation
-│       └── src/                                   # Compiler (single binary)
+│       └── src/                                   # Compiler + schema converter
 │
 └── corpora/
     └── samples/                                   # Sample documents for testing
@@ -107,6 +110,7 @@ llmd/
 | Tool | JS | Python | Rust | Purpose |
 |------|-----|--------|------|---------|
 | **llmdc** | `tools/js/llmdc.js` | `tools/py/llmdc.py` | `tools/rust/` | Compile Markdown → LLMD |
+| **schema2llmd** | `tools/js/schema2llmd.js` | `tools/py/schema2llmd.py` | `tools/rust/` | Convert JSON Schema → LLMD |
 
 Full reference docs: [`docs/`](docs/)
 
@@ -136,7 +140,7 @@ Run `pwsh tools/bench.ps1` or `bash tools/bench.sh` to reproduce.
 ## Key Features
 
 - **Hyphen-preserving key normalization** — CSS class names like `flm-button--primary` survive compilation intact
-- **Table classification** — 2-column property tables emit `:k=v`, 3+ column tables with identifier keys emit `:key=v1|v2`, others emit plain text rows with `:_cols=` headers
+- **Table classification** — 2-column property tables emit `:k=v`, 3+ column tables with identifier keys emit `:key=v1¦v2`, others emit plain text rows with `:_cols=` headers
 - **Common prefix extraction** — When keys share a prefix (e.g., `flm-text--`), it's factored out as `:_pfx=` to avoid repetition
 - **Chunked KV emission** — Large attribute groups split across multiple lines (`max_kv_per_line`, default 4)
 - **Boolean compression** — Columns of `Yes/No`, `true/false`, `enabled/disabled` → `Y/N`, `T/F`
@@ -208,9 +212,10 @@ Line types (each non-empty line starts with exactly one prefix, or none for pros
 - @name — scope. Sets the current topic. All following lines belong to this scope
   until the next @. Hierarchy is flattened: @Auth after @API means separate scopes,
   not nested. Reconstruct context from scope names.
-- :k=v k2=v2 — attributes. Key-value facts about the current scope. | separates
-  multiple values (e.g., methods=oauth2|apikey). Multiple pairs may appear on one
-  line, space-separated.
+- :k=v k2=v2 — attributes. Key-value facts about the current scope. ¦ (broken bar,
+  U+00A6) separates multiple values (e.g., methods=oauth2¦apikey). Multiple pairs
+  may appear on one line, space-separated. Parse each pair by splitting on the
+  first = (keys never contain =).
 - plain text (no prefix) — prose about the current scope.
 - -item — list item. Nested depth uses dots: -. child, -.. grandchild.
 - →Node — relation. Current scope depends on Node. ←Node is reverse. =Node is
@@ -222,7 +227,7 @@ Line types (each non-empty line starts with exactly one prefix, or none for pros
 Reserved meta-attributes (compiler-generated, prefixed with _):
 
 - :_col=<header> — column header for a 2-column property table.
-- :_cols=c1|c2|c3 — column headers for a multi-column table.
+- :_cols=c1¦c2¦c3 — column headers for a multi-column table.
 - :_pfx=<prefix> — common prefix extracted from subsequent keys. Prepend it to
   restore full key names (e.g., :_pfx=flm-text-- then :secondary=... means the
   full key is flm-text--secondary).

@@ -1,39 +1,39 @@
 @llmdc__llmd_compiler
 Compiles Markdown files LLMD token-optimized format 6-stage pipeline
-Available as node tools/js/llmdc.js python tools/py/llmdc.py
+Available as node tools/js/llmdc.js, python tools/py/llmdc.py, and cargo run --bin llmdc
 @usage
 ::bash
 <<<
 # Basic compilation (defaults to c2) llmdc input.md # Compile to file at compression level 2 llmdc input.md -o output.llmd -c 2 # Compile a directory llmdc docs/ -c 2 -o out.llmd
 >>>
 @options
-:_cols=option|description|default
--o, --output <path>|Output file (stdout if omitted)|stdout
--c, --compression <0-2>|Compression level|from config 2
---scope-mode <mode>|flat, concat, stacked|flat
---keep-urls|Preserve URLs c2+|false
---sentence-split|Split sentences separate > lines c2+|false
---anchor-every <n>|Re-emit @scope N lines|0 (off)
---config <path>|Config file path|auto-detect
--h, --help|Show help|
+:_cols=option¦description¦default
+-o, --output <path>¦Output file (stdout if omitted)¦stdout
+-c, --compression <0-2>¦Compression level¦from config or 2
+--scope-mode <mode>¦flat, concat, or stacked¦flat
+--keep-urls¦Preserve URLs c2+¦false
+--sentence-split¦Split sentences separate text lines c2+¦false
+--anchor-every <n>¦Re-emit @scope N lines¦0 (off)
+--config <path>¦Config file path¦auto-detect
+-h, --help¦Show help¦
 @config_file
-Auto-detected llmdc.config.json config/llmdc.config.json. CLI flags override config values
+Auto-detected llmdc.config.json or config/llmdc.config.json. CLI flags override config values
 See config/llmdc.config.json full default configuration
-:_cols=key|type|default|description
-compression|int|2|Compression level (0-2)
-scope_mode|string|"flat"|Scope resolution mode
-keep_urls|bool|false|Preserve URLs c2+
-sentence_split|bool|false|Split sentences c2+
-anchor_every|int|0|Scope anchor interval (0 = off)
-max_kv_per_line|int|4|Max key-value pairs per : line
-prefix_extraction|bool|true|Enable common prefix extraction
-min_prefix_len|int|6|Minimum prefix length extract
-min_prefix_pct|float|0.6|Minimum % keys sharing prefix
-bool_compress|bool|true|Compress boolean values c2+
-stopwords|string[]|see config|Words removed > lines c2+
-protect_words|string[]|see config|Words never removed
-phrase_map|object|see config|Phrase replacements c2+
-units|object|see config|Unit normalizations c2+
+:_cols=key¦type¦default¦description
+compression¦int¦2¦Compression level (0-2)
+scope_mode¦string¦"flat"¦Scope resolution mode
+keep_urls¦bool¦false¦Preserve URLs c2+
+sentence_split¦bool¦false¦Split sentences c2+
+anchor_every¦int¦0¦Scope anchor interval (0 = off)
+max_kv_per_line¦int¦4¦Max key-value pairs per : line
+prefix_extraction¦bool¦true¦Enable common prefix extraction
+min_prefix_len¦int¦6¦Minimum prefix length extract
+min_prefix_pct¦float¦0.6¦Minimum % keys sharing prefix
+bool_compress¦bool¦true¦Compress boolean values c2+
+stopwords¦string[]¦see config¦Words removed text/list lines c2+
+protect_words¦string[]¦see config¦Words never removed
+phrase_map¦object¦see config¦Phrase replacements c2+
+units¦object¦see config¦Unit normalizations c2+
 @pipeline
 @stage_0_normalize
 UTF-8 decode, NFKC unicode normalization, line ending normalization, trailing whitespace trim
@@ -42,28 +42,28 @@ Fenced code blocks replaced ⟦BLOCK:n⟧ placeholders. Block content preserved 
 @stage_2_parse_to_ir
 :lightweight_state_machine_producing_ir_nodes=Heading, Paragraph, ListItem, Table, KVLine, Blank, BlockRef.
 @stage_3_scope_resolution
-Headings map @scope declarations via normScopeName() (trim, spaces→_, lowercase c2+, strip punctuation except _ -)
+Headings map @scope declarations via normScopeName() (trim, spaces→_, lowercase c2+, strip punctuation except _ and -)
 @stage_4_emit_llmd
-Walk IR generate LLMD lines:
+Walk IR and generate LLMD lines:
 -Headings → @scope
--Paragraphs → >text (optionally sentence-split c2+)
--Lists → >item . depth prefixes
+-Paragraphs → plain text (no prefix; optionally sentence-split c2+)
+-Lists → -item . depth prefixes
 -KV lines → :key=value (buffered, chunked max_kv_per_line)
 -Tables → classified via classifyTable():
 -. property (2-col, unique identifier-like keys) → :k=v pairs, optional :_col=<header>
--. keyed_multi (3+ col, unique identifier-like keys) → :_cols=h1|h2|h3 then :key=v1|v2
--. raw (everything else) → :_cols=h1|h2|h3 then >c1|c2|c3
+-. keyed_multi (3+ col, unique identifier-like keys) → :_cols=h1¦h2¦h3 then :key=v1¦v2
+-. raw (everything else) → :_cols=h1¦h2¦h3 then c1¦c2¦c3 per row
 -Code blocks → ::lang + <<< content >>>
 @key_normalization_normkey
-Lowercase, spaces→_, strip punctuation except _ -, trim leading/trailing -
+Lowercase, spaces→_, strip punctuation except _ and -, trim leading/trailing -
 @common_prefix_extraction
-When ≥60% keys KV buffer share prefix ≥6 chars, emits :_pfx=<prefix> strips prefix matching keys
+When ≥60% keys KV buffer share prefix ≥6 chars, emits :_pfx=<prefix> and strips prefix matching keys
 @boolean_compression_c2
 Table columns where values boolean-like (Yes/No, true/false, enabled/disabled) mapped compact forms (Y/N, T/F)
 @stage_5_compression_passes
 Applied progressively, skipping block content:
-:_cols=level|name|transformations
-:c0=Normalize|Whitespace normalize, blank line collapse c1=Compact|Merge consecutive :k=v, prefix extraction c2=Token compact|Stopword removal, phrase map, unit normalization, boolean compression
+:_cols=level¦name¦transformations
+:c0=Normalize¦Whitespace normalize, blank line collapse c1=Compact¦Merge consecutive :k=v, prefix extraction c2=Token compact¦Stopword removal, phrase map, unit normalization, boolean compression
 @stage_6_post-process
 Validation (no scoped lines before first @), optional scope anchors
 @input_formats
@@ -71,7 +71,7 @@ Validation (no scoped lines before first @), optional scope anchors
 -.llmd — passthrough/normalize mode
 -Directories — recursively scanned matching files (sorted lexicographically)
 @output_format
-.llmd text file. See LLMD Specification line type reference
+.llmd text file. See LLMD spec line type reference
 @examples
 @input
 ::markdown
